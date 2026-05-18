@@ -83,8 +83,8 @@ def generate_launch_description():
             DeclareLaunchArgument("world_name", default_value="kki_2026_lintasan_a"),
             DeclareLaunchArgument(
                 "show_lidar_visual",
-                default_value="false",
-                description="Set false to hide Gazebo LiDAR rays while keeping the sensor topic active.",
+                default_value="true",
+                description="Show Gazebo LiDAR rays. Set false to hide rays while keeping /asv/lidar/scan active.",
             ),
             include_launch(
                 "asv_bringup",

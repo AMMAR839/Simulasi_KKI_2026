@@ -28,6 +28,15 @@
           </cylinder>
         </geometry>
       </collision>
+      <sensor name="object_contact_sensor" type="contact">
+        <!-- Start/finish contact is detectable without making the marker tall. -->
+        <contact>
+          <collision>collision</collision>
+          <topic>/kki/collisions/objects</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
     </link>
   </model>
 </sdf>

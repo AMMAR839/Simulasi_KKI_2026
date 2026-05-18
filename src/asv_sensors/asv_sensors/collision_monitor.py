@@ -19,6 +19,7 @@ CONTACT_TOPICS = [
     "/asv/collisions/lidar",
     "/asv/collisions/front_camera",
     "/asv/collisions/down_camera",
+    "/kki/collisions/objects",
 ]
 
 
@@ -29,6 +30,7 @@ class CollisionMonitor(Node):
         self.contact_hold = float(self.get_parameter("contact_hold_s").value)
         self.last_contact_time = 0.0
         self.last_summary = "clear"
+        self.kinematic_summary = "kinematic_collision"
 
         self.detected_pub = self.create_publisher(
             Bool, "/asv/collision/detected", 10
@@ -44,6 +46,18 @@ class CollisionMonitor(Node):
                 lambda msg, source=topic: self.on_contacts(msg, source),
                 10,
             )
+        self.create_subscription(
+            Bool,
+            "/asv/collision/kinematic_detected",
+            self.on_kinematic_detected,
+            10,
+        )
+        self.create_subscription(
+            String,
+            "/asv/collision/kinematic_status",
+            self.on_kinematic_status,
+            10,
+        )
 
         self.create_timer(0.10, self.on_timer)
 
@@ -62,6 +76,22 @@ class CollisionMonitor(Node):
         # publish intermittently when a pose-driven model just touches an object.
         self.last_contact_time = time.monotonic()
         self.last_summary = f"{source}: " + " | ".join(details)
+
+    def on_kinematic_detected(self, msg: Bool):
+        if msg.data:
+            self.last_contact_time = time.monotonic()
+            self.last_summary = self.kinematic_summary
+
+    def on_kinematic_status(self, msg: String):
+        data = msg.data.strip()
+        if not data or data == "clear":
+            return
+
+        # The pose-driven ASV cannot rely on Gazebo to push it back, so the
+        # planar controller publishes its own collision stop/rebound status.
+        self.kinematic_summary = data
+        self.last_contact_time = time.monotonic()
+        self.last_summary = data
 
     def on_timer(self):
         active = (time.monotonic() - self.last_contact_time) <= self.contact_hold

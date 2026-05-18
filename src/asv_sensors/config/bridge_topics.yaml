@@ -91,3 +91,7 @@ bridge_topics:
     ros_type: ros_gz_interfaces/msg/Contacts
     gz_type: gz.msgs.Contacts
     direction: gz_to_ros
+  - topic: /kki/collisions/objects
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros

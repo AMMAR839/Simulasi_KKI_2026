@@ -28,6 +28,7 @@ BRIDGE_ARGUMENTS = [
     "/asv/collisions/lidar@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
     "/asv/collisions/front_camera@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
     "/asv/collisions/down_camera@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+    "/kki/collisions/objects@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
 ]
 
 

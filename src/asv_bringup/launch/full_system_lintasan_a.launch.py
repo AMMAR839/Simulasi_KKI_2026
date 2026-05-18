@@ -23,8 +23,8 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "show_lidar_visual",
-                default_value="false",
-                description="Show/hide Gazebo LiDAR rays without disabling the LiDAR sensor.",
+                default_value="true",
+                description="Show Gazebo LiDAR rays. Set false to hide rays while keeping the sensor active.",
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(

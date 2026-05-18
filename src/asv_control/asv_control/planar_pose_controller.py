@@ -9,7 +9,7 @@ from gz.transport13 import Node as GzNode
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-from std_msgs.msg import Float64, String
+from std_msgs.msg import Bool, Float64, String
 
 
 def clamp(value, lower, upper):
@@ -88,6 +88,11 @@ class PlanarPoseController(Node):
         self.declare_parameter("wave_pitch_deg", 1.6)
         self.declare_parameter("service_timeout_ms", 1000)
         self.declare_parameter("startup_grace_s", 8.0)
+        self.declare_parameter("kinematic_collision_enabled", True)
+        self.declare_parameter("hull_collision_half_length_m", 0.44)
+        self.declare_parameter("hull_collision_half_width_m", 0.29)
+        self.declare_parameter("collision_margin_m", 0.03)
+        self.declare_parameter("collision_rebound_factor", 0.12)
 
         self.world_name = str(self.get_parameter("world_name").value)
         self.model_name = str(self.get_parameter("model_name").value)
@@ -125,6 +130,20 @@ class PlanarPoseController(Node):
         self.timeout = float(self.get_parameter("command_timeout_s").value)
         self.service_timeout = int(self.get_parameter("service_timeout_ms").value)
         self.startup_grace = float(self.get_parameter("startup_grace_s").value)
+        self.kinematic_collision_enabled = bool(
+            self.get_parameter("kinematic_collision_enabled").value
+        )
+        self.hull_half_length = max(
+            0.10, float(self.get_parameter("hull_collision_half_length_m").value)
+        )
+        self.hull_half_width = max(
+            0.08, float(self.get_parameter("hull_collision_half_width_m").value)
+        )
+        self.collision_margin = max(0.0, float(self.get_parameter("collision_margin_m").value))
+        self.collision_rebound = max(
+            0.0, min(0.6, float(self.get_parameter("collision_rebound_factor").value))
+        )
+        self.collision_objects = self.build_course_collision_objects()
 
         self.last_cmd = Twist()
         self.last_cmd_time = 0.0
@@ -139,9 +158,17 @@ class PlanarPoseController(Node):
         self.last_status = 0.0
         self.last_pose_result = False
         self.last_pose_response = False
+        self.last_collision_time = 0.0
+        self.last_collision_name = "clear"
 
         self.status_pub = self.create_publisher(
             String, "/asv/control/planar_pose_status", 10
+        )
+        self.collision_pub = self.create_publisher(
+            Bool, "/asv/collision/kinematic_detected", 10
+        )
+        self.collision_status_pub = self.create_publisher(
+            String, "/asv/collision/kinematic_status", 10
         )
         self.create_subscription(
             Twist, str(self.get_parameter("cmd_vel_topic").value), self.on_cmd, 10
@@ -199,13 +226,35 @@ class PlanarPoseController(Node):
         dt = clamp(now - self.last_update, 0.0, 0.10)
         self.last_update = now
 
+        previous_x = self.x
+        previous_y = self.y
+        previous_yaw = self.yaw
         self.integrate_propulsion(now, dt)
 
         cos_yaw = math.cos(self.yaw)
         sin_yaw = math.sin(self.yaw)
-        self.x += (self.u * cos_yaw - self.v * sin_yaw) * dt
-        self.y += (self.u * sin_yaw + self.v * cos_yaw) * dt
-        self.yaw = normalize_angle(self.yaw + self.r * dt)
+        candidate_x = self.x + (self.u * cos_yaw - self.v * sin_yaw) * dt
+        candidate_y = self.y + (self.u * sin_yaw + self.v * cos_yaw) * dt
+        candidate_yaw = normalize_angle(self.yaw + self.r * dt)
+
+        collision_name = self.first_kinematic_collision(
+            candidate_x, candidate_y, candidate_yaw
+        )
+        if collision_name:
+            # The ASV is pose-driven for stability, so Gazebo physics cannot
+            # push it back. Apply a local stop/rebound before publishing pose.
+            self.x = previous_x
+            self.y = previous_y
+            self.yaw = previous_yaw
+            self.u *= -self.collision_rebound
+            self.v *= 0.15
+            self.r *= 0.20
+            self.last_collision_time = now
+            self.last_collision_name = collision_name
+        else:
+            self.x = candidate_x
+            self.y = candidate_y
+            self.yaw = candidate_yaw
 
         ok = self.set_model_pose()
         if (
@@ -222,6 +271,7 @@ class PlanarPoseController(Node):
 
         if now - self.last_status > 1.0:
             roll, pitch, heave = self.wave_motion(now)
+            collision_active = now - self.last_collision_time < 0.50
             self.status_pub.publish(
                 String(
                     data=(
@@ -234,8 +284,19 @@ class PlanarPoseController(Node):
                         f"left={self.left_thrust:.1f}N right={self.right_thrust:.1f}N "
                         f"servo_l={math.degrees(self.left_steer):.1f}deg "
                         f"servo_r={math.degrees(self.right_steer):.1f}deg "
+                        f"collision={self.last_collision_name if collision_active else 'clear'} "
                         f"wave_roll={math.degrees(roll):.1f}deg "
                         f"wave_pitch={math.degrees(pitch):.1f}deg"
+                    )
+                )
+            )
+            self.collision_pub.publish(Bool(data=collision_active))
+            self.collision_status_pub.publish(
+                String(
+                    data=(
+                        f"kinematic_collision={self.last_collision_name}"
+                        if collision_active
+                        else "clear"
                     )
                 )
             )
@@ -280,6 +341,115 @@ class PlanarPoseController(Node):
     def thruster_force(self, thrust_cmd, steer_angle):
         thrust = self.effective_thrust_scale * thrust_cmd
         return thrust * math.cos(steer_angle), thrust * math.sin(steer_angle)
+
+    def build_course_collision_objects(self):
+        course_b = "lintasan_b" in self.world_name.lower()
+        mirror = -1.0 if course_b else 1.0
+
+        objects = []
+        for y in (0.0, 4.8, 8.8):
+            objects.append({"type": "circle", "name": f"left_gate_green_{y}", "x": -13.0, "y": y, "r": 0.10})
+            objects.append({"type": "circle", "name": f"left_gate_red_{y}", "x": -11.0, "y": y, "r": 0.10})
+            objects.append({"type": "circle", "name": f"right_gate_red_{y}", "x": 11.0, "y": y, "r": 0.10})
+            objects.append({"type": "circle", "name": f"right_gate_green_{y}", "x": 13.0, "y": y, "r": 0.10})
+        for x in (-5.2, -1.4, 2.4, 6.2):
+            objects.append({"type": "circle", "name": f"top_gate_green_{x}", "x": x, "y": 13.0, "r": 0.10})
+            objects.append({"type": "circle", "name": f"top_gate_red_{x}", "x": x, "y": 11.0, "r": 0.10})
+
+        for y in (-10.0, -9.7, -9.4):
+            objects.append({"type": "circle", "name": f"docking_blue_{y}", "x": mirror * 12.35, "y": y, "r": 0.10})
+
+        objects.extend(
+            [
+                {"type": "circle", "name": "floating_obstacle_1", "x": mirror * -3.0, "y": -2.0, "r": 0.22},
+                {"type": "circle", "name": "floating_obstacle_2", "x": mirror * 6.8, "y": 2.4, "r": 0.22},
+                {"type": "box", "name": "surface_target", "x": mirror * -10.2, "y": -5.4, "hx": 0.30, "hy": 0.30, "yaw": 0.0},
+                {"type": "box", "name": "underwater_target", "x": mirror * -11.0, "y": -7.7, "hx": 0.30, "hy": 0.30, "yaw": 0.0},
+                {"type": "box", "name": "dock", "x": mirror * 13.5, "y": -9.4, "hx": 1.30, "hy": 0.325, "yaw": math.pi / 2.0},
+            ]
+        )
+        return objects
+
+    def first_kinematic_collision(self, x, y, yaw):
+        if not self.kinematic_collision_enabled:
+            return ""
+        for obj in self.collision_objects:
+            if obj["type"] == "circle" and self.circle_hits_hull(x, y, yaw, obj):
+                return obj["name"]
+            if obj["type"] == "box" and self.box_hits_hull(x, y, yaw, obj):
+                return obj["name"]
+        return ""
+
+    def circle_hits_hull(self, x, y, yaw, obj):
+        # Use an oriented hull footprint instead of one large radius. The gate
+        # buoys are only 2 m apart, so a circular proxy can stop the boat even
+        # when it is correctly passing through the center.
+        local_x, local_y = self.world_to_hull_local(obj["x"], obj["y"], x, y, yaw)
+        closest_x = clamp(local_x, -self.hull_half_length, self.hull_half_length)
+        closest_y = clamp(local_y, -self.hull_half_width, self.hull_half_width)
+        distance = math.hypot(local_x - closest_x, local_y - closest_y)
+        return distance <= obj["r"] + self.collision_margin
+
+    def box_hits_hull(self, x, y, yaw, obj):
+        return self.oriented_boxes_overlap(
+            x,
+            y,
+            yaw,
+            self.hull_half_length,
+            self.hull_half_width,
+            obj["x"],
+            obj["y"],
+            obj["yaw"],
+            obj["hx"],
+            obj["hy"],
+            self.collision_margin,
+        )
+
+    def world_to_hull_local(self, point_x, point_y, hull_x, hull_y, hull_yaw):
+        dx = point_x - hull_x
+        dy = point_y - hull_y
+        cy = math.cos(-hull_yaw)
+        sy = math.sin(-hull_yaw)
+        return dx * cy - dy * sy, dx * sy + dy * cy
+
+    def oriented_boxes_overlap(
+        self,
+        ax,
+        ay,
+        ayaw,
+        ahx,
+        ahy,
+        bx,
+        by,
+        byaw,
+        bhx,
+        bhy,
+        margin,
+    ):
+        a_axes = self.box_axes(ayaw)
+        b_axes = self.box_axes(byaw)
+        dx = bx - ax
+        dy = by - ay
+
+        for axis_x, axis_y in (*a_axes, *b_axes):
+            distance = abs(dx * axis_x + dy * axis_y)
+            a_radius = self.projected_radius(axis_x, axis_y, a_axes, ahx, ahy)
+            b_radius = self.projected_radius(axis_x, axis_y, b_axes, bhx, bhy)
+            if distance > a_radius + b_radius + margin:
+                return False
+        return True
+
+    def box_axes(self, yaw):
+        cos_yaw = math.cos(yaw)
+        sin_yaw = math.sin(yaw)
+        return ((cos_yaw, sin_yaw), (-sin_yaw, cos_yaw))
+
+    def projected_radius(self, axis_x, axis_y, box_axes, half_x, half_y):
+        x_axis, y_axis = box_axes
+        return (
+            half_x * abs(axis_x * x_axis[0] + axis_y * x_axis[1])
+            + half_y * abs(axis_x * y_axis[0] + axis_y * y_axis[1])
+        )
 
     def wave_motion(self, now):
         if not self.wave_enabled:

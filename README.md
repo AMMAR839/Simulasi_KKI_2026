@@ -74,7 +74,10 @@ Waypoint autonomous tidak harus ditabrak tepat. Waypoint dianggap selesai jika k
 - `segment_pass_margin_m`
 - `gate_cross_track_radius_m`
 
-Visual ray LiDAR dikontrol dengan `show_lidar_visual`. Ini hanya mengubah tampilan ray di Gazebo, bukan mematikan sensor. Topic `/asv/lidar/scan` tetap aktif untuk object detection.
+Visual ray LiDAR dikontrol dengan `show_lidar_visual`, default-nya sekarang
+`true` agar ray terlihat saat Gazebo dibuka. Ini hanya mengubah tampilan ray di
+Gazebo, bukan mematikan sensor. Topic `/asv/lidar/scan` tetap aktif untuk
+object detection.
 
 ## Build
 
@@ -234,6 +237,9 @@ ros2 topic pub --once /asv/mode std_msgs/msg/String "{data: 'stop'}"
 - `/asv/collisions/left_thruster`, `/asv/collisions/right_thruster`: kontak thruster
 - `/asv/collisions/left_propeller`, `/asv/collisions/right_propeller`: kontak propeller
 - `/asv/collisions/lidar`, `/asv/collisions/front_camera`, `/asv/collisions/down_camera`: kontak komponen sensor
+- `/kki/collisions/objects`: kontak mentah dari buoy, obstacle, target box, dock, dan marker start/finish
+- `/asv/collision/kinematic_detected`: collision response dari `planar_pose_controller`
+- `/asv/collision/kinematic_status`: nama object yang ditahan oleh collision response kinematik
 
 ## Waypoint
 
@@ -285,7 +291,15 @@ Collision geometry kapal dan object lintasan ada di:
 - `/home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models/asv_kki_2026/model.sdf`
 - `/home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/*/model.sdf`
 
-Kapal dibuat `static=false` tetapi link-nya tetap `kinematic=true`. Tujuannya agar Gazebo bisa menghitung contact/collision, sementara gerak kapal tetap stabil dikendalikan oleh `planar_pose_controller`.
+Kapal aktif dibuat `static=true` dan digerakkan oleh `planar_pose_controller`.
+Pilihan ini dipakai karena model kecil mudah flickering/tenggelam jika dibuat
+rigid body bebas di permukaan wave mesh. Konsekuensinya, Gazebo tidak otomatis
+mendorong balik kapal saat menabrak object. Untuk itu collision punya dua lapis:
+
+1. Contact sensor Gazebo pada collision geometry kapal dan object lintasan.
+2. Collision response kinematik di `planar_pose_controller.py` yang menghentikan
+   dan sedikit memantulkan kapal saat hull masuk radius buoy, obstacle, target,
+   atau dock.
 
 Contact sensor kapal aktif pada:
 
@@ -294,6 +308,14 @@ Contact sensor kapal aktif pada:
 - propeller kiri/kanan;
 - LiDAR;
 - kamera depan dan bawah.
+
+Object lintasan juga punya contact sensor pada topic `/kki/collisions/objects`:
+
+- buoy merah/hijau/biru diameter `0.20 m`;
+- obstacle kuning;
+- target kotak hijau/biru `0.60 x 0.60 x 0.90 m`;
+- dock finish.
+- marker start/finish tipis.
 
 Bridge contact Gazebo ke ROS 2 didefinisikan di:
 
@@ -308,9 +330,13 @@ Cek collision:
 ```bash
 ros2 topic echo /asv/collision/detected
 ros2 topic echo /asv/collision/status
+ros2 topic echo /asv/collision/kinematic_status
+ros2 topic echo /kki/collisions/objects
 ```
 
-Catatan: karena kapal digerakkan dengan pose controller, contact dipakai untuk deteksi sentuhan/tabrakan. Ini menjaga simulasi stabil; bukan simulasi tumbukan dinamis penuh seperti rigid body bebas.
+Catatan: karena kapal digerakkan dengan pose controller, contact dipakai untuk
+deteksi sentuhan/tabrakan dan controller menghentikan gerak kapal. Ini menjaga
+simulasi stabil; bukan simulasi tumbukan dinamis penuh seperti rigid body bebas.
 
 ## Visualisasi LiDAR Gazebo
 
@@ -371,6 +397,13 @@ Parameter ombak aktif dibuat lebih tenang untuk area lomba 30 x 30 m:
 - `period: 3.5`
 - `scale: 1.0`
 - `steepness: 0.55`
+
+Apakah air memengaruhi gerak kapal? Pada setup aktif ini, wave mesh memengaruhi
+visual pose kapal melalui `planar_pose_controller`: kapal diberi heave, roll,
+dan pitch kecil mengikuti parameter `wave_amplitude_m`, `wave_roll_deg`, dan
+`wave_pitch_deg`. Air belum menjadi gaya buoyancy/hydrodynamics penuh dari
+solver Gazebo. Ini sengaja dibuat stabil agar kapal tidak flickering/tenggelam
+saat simulasi lintasan, joystick, dan autonomous dijalankan.
 
 Karena plugin `libWavefieldModelPlugin.so` pada SINGABOAT adalah plugin Gazebo Classic, world GZ Sim/Harmonic ini memakai visual ocean SINGABOAT plus overlay crest gelombang lokal agar ombak terlihat. Untuk dynamic wave simulation GZ Sim, build plugin `gz-waves1-*` dari folder referensi:
 
