@@ -1,0 +1,31 @@
+reference_paths:
+  vrx: /home/ammar/Documents/asv_simulation/vrx
+  singaboat_vrx: /home/ammar/Documents/asv_simulation/SINGABOAT-VRX
+  gz_sensors: /home/ammar/Documents/asv_simulation/gz-sensors
+  asv_wave_sim: /home/ammar/Documents/asv_simulation/asv_wave_sim
+  source_cad: /home/ammar/Documents/asv_simulation/Final_TOT.3dm
+  competition_pdf: /home/ammar/Documents/asv_simulation/Sosialisasi KKI 2026 - ASV.pdf
+  component_pdf: /home/ammar/Documents/asv_simulation/Savinah One 2025.pdf
+
+topics:
+  gps_fix: /asv/gps/fix
+  imu: /asv/imu/data
+  lidar_scan: /asv/lidar/scan
+  front_camera_image: /asv/camera/front/image
+  down_camera_image: /asv/camera/down/image
+  odometry: /asv/odom
+  cmd_vel: /cmd_vel
+  cmd_vel_manual: /cmd_vel_manual
+  cmd_vel_auto: /cmd_vel_auto
+  left_thruster: /model/asv_kki_2026/joint/left_propeller_joint/cmd_thrust
+  right_thruster: /model/asv_kki_2026/joint/right_propeller_joint/cmd_thrust
+  left_thruster_steering: /asv/thrusters/left_steering/cmd_pos
+  right_thruster_steering: /asv/thrusters/right_steering/cmd_pos
+
+sensor_frames:
+  base_link: base_link
+  gps: gps_link
+  imu: imu_link
+  lidar: lidar_link
+  front_camera: front_camera_link
+  down_camera: down_camera_link

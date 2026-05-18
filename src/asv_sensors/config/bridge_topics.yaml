@@ -1,0 +1,93 @@
+bridge_topics:
+  - topic: /clock
+    ros_type: rosgraph_msgs/msg/Clock
+    gz_type: gz.msgs.Clock
+    direction: gz_to_ros
+  - topic: /asv/gps/fix
+    ros_type: sensor_msgs/msg/NavSatFix
+    gz_type: gz.msgs.NavSat
+    direction: gz_to_ros
+  - topic: /asv/imu/data
+    ros_type: sensor_msgs/msg/Imu
+    gz_type: gz.msgs.IMU
+    direction: gz_to_ros
+  - topic: /asv/lidar/scan
+    ros_type: sensor_msgs/msg/LaserScan
+    gz_type: gz.msgs.LaserScan
+    direction: gz_to_ros
+  - topic: /asv/camera/front/image
+    ros_type: sensor_msgs/msg/Image
+    gz_type: gz.msgs.Image
+    direction: gz_to_ros
+  - topic: /asv/camera/front/camera_info
+    ros_type: sensor_msgs/msg/CameraInfo
+    gz_type: gz.msgs.CameraInfo
+    direction: gz_to_ros
+  - topic: /asv/camera/down/image
+    ros_type: sensor_msgs/msg/Image
+    gz_type: gz.msgs.Image
+    direction: gz_to_ros
+  - topic: /asv/camera/down/camera_info
+    ros_type: sensor_msgs/msg/CameraInfo
+    gz_type: gz.msgs.CameraInfo
+    direction: gz_to_ros
+  - topic: /asv/odom
+    ros_type: nav_msgs/msg/Odometry
+    gz_type: gz.msgs.Odometry
+    direction: gz_to_ros
+  - topic: /model/asv_kki_2026/joint/left_propeller_joint/cmd_thrust
+    ros_type: std_msgs/msg/Float64
+    gz_type: gz.msgs.Double
+    direction: ros_to_gz
+  - topic: /model/asv_kki_2026/joint/right_propeller_joint/cmd_thrust
+    ros_type: std_msgs/msg/Float64
+    gz_type: gz.msgs.Double
+    direction: ros_to_gz
+  - topic: /model/asv_kki_2026/joint/left_propeller_joint/cmd_vel
+    ros_type: std_msgs/msg/Float64
+    gz_type: gz.msgs.Double
+    direction: ros_to_gz
+  - topic: /model/asv_kki_2026/joint/right_propeller_joint/cmd_vel
+    ros_type: std_msgs/msg/Float64
+    gz_type: gz.msgs.Double
+    direction: ros_to_gz
+  - topic: /asv/thrusters/left_steering/cmd_pos
+    ros_type: std_msgs/msg/Float64
+    gz_type: gz.msgs.Double
+    direction: ros_to_gz
+  - topic: /asv/thrusters/right_steering/cmd_pos
+    ros_type: std_msgs/msg/Float64
+    gz_type: gz.msgs.Double
+    direction: ros_to_gz
+  - topic: /asv/collisions/hull
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/left_thruster
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/right_thruster
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/left_propeller
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/right_propeller
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/lidar
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/front_camera
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros
+  - topic: /asv/collisions/down_camera
+    ros_type: ros_gz_interfaces/msg/Contacts
+    gz_type: gz.msgs.Contacts
+    direction: gz_to_ros

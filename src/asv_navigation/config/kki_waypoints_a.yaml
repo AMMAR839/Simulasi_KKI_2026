@@ -1,0 +1,28 @@
+origin:
+  latitude: 1.470000
+  longitude: 102.110000
+  elevation: 0.0
+
+default_speed_mps: 0.75
+
+waypoints:
+  - {name: start_a, x: 10.80, y: -8.70, speed: 0.35}
+  - {name: path_01, x: 12.00, y: -5.20, speed: 0.50}
+  - {name: path_02, x: 12.00, y: 0.00, speed: 0.75}
+  - {name: path_03, x: 12.00, y: 4.80, speed: 0.75}
+  - {name: path_04, x: 12.00, y: 8.80, speed: 0.75}
+  - {name: path_05, x: 6.20, y: 12.00, speed: 0.75}
+  - {name: path_06, x: 2.40, y: 12.00, speed: 0.75}
+  - {name: path_07, x: -1.40, y: 12.00, speed: 0.75}
+  - {name: path_08, x: -5.20, y: 12.00, speed: 0.75}
+  - {name: path_09, x: -12.00, y: 8.80, speed: 0.75}
+  - {name: path_10, x: -12.00, y: 4.80, speed: 0.75}
+  - {name: path_11, x: -12.00, y: 0.00, speed: 0.75}
+  - {name: path_12, x: -11.20, y: -4.80, speed: 0.72}
+  - {name: surface_photo_green_box, x: -10.20, y: -5.40, speed: 0.32}
+  - {name: underwater_photo_blue_box, x: -11.00, y: -7.70, speed: 0.32}
+  - {name: path_13, x: -8.00, y: -9.00, speed: 0.62}
+  - {name: path_14, x: -2.00, y: -11.20, speed: 0.75}
+  - {name: path_15, x: 4.00, y: -11.20, speed: 0.75}
+  - {name: return_to_start_finish, x: 10.80, y: -8.70, speed: 0.45}
+  - {name: dock_contact_blue_buoys, x: 12.15, y: -9.70, speed: 0.22}

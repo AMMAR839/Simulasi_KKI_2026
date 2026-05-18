@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="kki_obstacle_yellow">
+    <static>true</static>
+    <link name="base_link">
+      <visual name="obstacle_visual">
+        <geometry>
+          <cylinder>
+            <radius>0.22</radius>
+            <length>0.70</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1.0 0.76 0.02 1</ambient>
+          <diffuse>1.0 0.76 0.02 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <!-- Cylindrical collision follows the obstacle visual so hit detection
+             happens on the round obstacle body, not a square proxy. -->
+        <geometry>
+          <cylinder>
+            <radius>0.22</radius>
+            <length>0.70</length>
+          </cylinder>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,23 @@
+workspace:
+  root: /home/ammar/Documents/asv_simulation/asv_kki_2026_ws
+  description_models: /home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models
+  gazebo_models: /home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models
+  world_lintasan_a: /home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/worlds/kki_2026_lintasan_a.sdf
+  world_lintasan_b: /home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/worlds/kki_2026_lintasan_b.sdf
+  world_default_alias: /home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/worlds/kki_2026_asv_course.sdf
+
+references:
+  vrx: /home/ammar/Documents/asv_simulation/vrx
+  vrx_gz_models: /home/ammar/Documents/asv_simulation/vrx/vrx_gz/models
+  vrx_urdf_models: /home/ammar/Documents/asv_simulation/vrx/vrx_urdf/vrx_gazebo/models
+  singaboat_vrx: /home/ammar/Documents/asv_simulation/SINGABOAT-VRX
+  singaboat_models: /home/ammar/Documents/asv_simulation/SINGABOAT-VRX/vrx/vrx_gazebo/models
+  singaboat_worlds: /home/ammar/Documents/asv_simulation/SINGABOAT-VRX/singaboat_vrx/worlds
+  singaboat_ocean_waves: /home/ammar/Documents/asv_simulation/SINGABOAT-VRX/vrx/wave_gazebo/world_models/ocean_waves
+  gz_sensors: /home/ammar/Documents/asv_simulation/gz-sensors
+  asv_wave_sim: /home/ammar/Documents/asv_simulation/asv_wave_sim
+  asv_wave_models: /home/ammar/Documents/asv_simulation/asv_wave_sim/gz-waves-models/models
+  asv_wave_world_models: /home/ammar/Documents/asv_simulation/asv_wave_sim/gz-waves-models/world_models
+  final_tot_3dm: /home/ammar/Documents/asv_simulation/Final_TOT.3dm
+  competition_pdf: /home/ammar/Documents/asv_simulation/Sosialisasi KKI 2026 - ASV.pdf
+  component_pdf: /home/ammar/Documents/asv_simulation/Savinah One 2025.pdf

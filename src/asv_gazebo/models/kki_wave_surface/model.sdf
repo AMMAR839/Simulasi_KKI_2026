@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="kki_wave_surface">
+    <static>true</static>
+    <link name="base_link">
+      <visual name="singaboat_ocean_wave_visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>file:///home/ammar/Documents/asv_simulation/SINGABOAT-VRX/vrx/wave_gazebo/world_models/ocean_waves/meshes/mesh.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.0 0.10 0.20 0.86</ambient>
+          <diffuse>0.0 0.26 0.42 0.86</diffuse>
+          <specular>0.7 0.7 0.7 1</specular>
+          <pbr>
+            <metal>
+              <normal_map>file:///home/ammar/Documents/asv_simulation/SINGABOAT-VRX/vrx/wave_gazebo/world_models/ocean_waves/materials/textures/wave_normals.dds</normal_map>
+              <roughness>0.25</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="singaboat_ocean_wave_below_visual">
+        <cast_shadows>false</cast_shadows>
+        <pose>0 0 -0.050 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>file:///home/ammar/Documents/asv_simulation/SINGABOAT-VRX/vrx/wave_gazebo/world_models/ocean_waves/meshes/mesh_below.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.0 0.06 0.16 0.65</ambient>
+          <diffuse>0.0 0.14 0.30 0.65</diffuse>
+          <specular>0.45 0.55 0.60 1</specular>
+          <pbr>
+            <metal>
+              <normal_map>file:///home/ammar/Documents/asv_simulation/SINGABOAT-VRX/vrx/wave_gazebo/world_models/ocean_waves/materials/textures/wave_normals.dds</normal_map>
+              <roughness>0.35</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

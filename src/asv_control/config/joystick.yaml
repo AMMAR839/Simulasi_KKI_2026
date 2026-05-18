@@ -1,0 +1,28 @@
+simple_joystick_teleop:
+  ros__parameters:
+    device: /dev/input/js0
+    device_id: 0
+    deadzone: 0.08
+    autorepeat_rate: 20.0
+    coalesce_interval_ms: 1
+    # Xbox left stick up/down. Axis 1 controls throttle: forward/backward movement.
+    axis_linear_x: 1
+    scale_linear_x: 1.2
+    scale_linear_turbo_x: 1.8
+    # Xbox left stick left/right. Axis 0 controls steering: left/right yaw command.
+    axis_angular_yaw: 0
+    scale_angular_yaw: 0.9
+    scale_angular_turbo_yaw: 1.4
+    # Xbox: hold X button 2 for normal manual drive, hold Y button 3 for turbo.
+    enable_button: 2
+    enable_turbo_button: 3
+    require_enable_button: true
+
+joystick_mode_manager:
+  ros__parameters:
+    # Xbox: LB button 4 returns to manual mode; RB button 5 switches to autonomous mode.
+    manual_button: 4
+    auto_button: 5
+    # Xbox: B button 1 stops the ship; A button 0 clears the stop command.
+    estop_button: 1
+    clear_estop_button: 0

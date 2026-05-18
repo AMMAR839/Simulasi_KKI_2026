@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="kki_buoy_green">
+    <static>true</static>
+    <!-- Round buoy based on:
+         /home/ammar/Documents/asv_simulation/asv_wave_sim/gz-waves-models/models/spherical_buoy
+         Kept static so race marker positions remain fixed in the KKI course. -->
+    <link name="base_link">
+      <visual name="round_buoy_body">
+        <geometry><sphere><radius>0.10</radius></sphere></geometry>
+        <material>
+          <ambient>0.02 0.78 0.12 1</ambient>
+          <diffuse>0.02 0.78 0.12 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <double_sided>true</double_sided>
+        </material>
+      </visual>
+      <visual name="waterline_shadow">
+        <pose>0 0 -0.03 0 0 0</pose>
+        <geometry><cylinder><radius>0.102</radius><length>0.025</length></cylinder></geometry>
+        <material>
+          <ambient>0.02 0.14 0.04 1</ambient>
+          <diffuse>0.02 0.14 0.04 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <!-- 20 cm diameter buoy collision, matching the visual sphere. -->
+        <geometry><sphere><radius>0.10</radius></sphere></geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

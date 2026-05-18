@@ -1,0 +1,952 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="asv_kki_2026">
+    <!-- Non-static kinematic model: Gazebo can compute contacts, while the
+         planar controller still owns the stable ASV pose on the water. -->
+    <static>false</static>
+    <enable_wind>false</enable_wind>
+
+    <link name="base_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose>0 0 0 0 0 0</pose>
+      <visual name="vrx_roboboat02_hull_visual">
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat02/meshes/roboboat02.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.8 0.8 0.8 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat02/materials/textures/Boat02_Albedo.png</albedo_map>
+              <normal_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat02/materials/textures/Boat02_Normal.png</normal_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat02/materials/textures/Boat02_Roughness.png</roughness_map>
+              <metalness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat02/materials/textures/Boat02_Metallic.png</metalness_map>
+            </metal>
+          </pbr>
+          <double_sided>true</double_sided>
+        </material>
+      </visual>
+      <visual name="vrx_drybox_visual">
+        <pose>0.000 0.000 0.210 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat_cpubox/meshes/drybox.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.6 0.6 0.6 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat_cpubox/materials/textures/DryBox_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat_cpubox/materials/textures/DryBox_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="left_thruster_bracket_visual">
+        <pose>-0.150 0.264 -0.042 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.035 0.032 0.120</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.015 0.015 0.015 1</ambient>
+          <diffuse>0.015 0.015 0.015 1</diffuse>
+        </material>
+      </visual>
+      <visual name="right_thruster_bracket_visual">
+        <pose>-0.150 -0.264 -0.042 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.035 0.032 0.120</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.015 0.015 0.015 1</ambient>
+          <diffuse>0.015 0.015 0.015 1</diffuse>
+        </material>
+      </visual>
+      <visual name="left_thruster_servo_case_visual">
+        <pose>-0.150 0.264 -0.024 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.078 0.058 0.038</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.18 0.18 0.17 1</ambient>
+          <diffuse>0.18 0.18 0.17 1</diffuse>
+          <specular>0.28 0.28 0.25 1</specular>
+        </material>
+      </visual>
+      <visual name="left_thruster_servo_shaft_visual">
+        <pose>-0.150 0.264 -0.057 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.010</radius>
+            <length>0.090</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.02 0.02 0.02 1</ambient>
+          <diffuse>0.02 0.02 0.02 1</diffuse>
+        </material>
+      </visual>
+      <visual name="right_thruster_servo_case_visual">
+        <pose>-0.150 -0.264 -0.024 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.078 0.058 0.038</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.18 0.18 0.17 1</ambient>
+          <diffuse>0.18 0.18 0.17 1</diffuse>
+          <specular>0.28 0.28 0.25 1</specular>
+        </material>
+      </visual>
+      <visual name="right_thruster_servo_shaft_visual">
+        <pose>-0.150 -0.264 -0.057 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.010</radius>
+            <length>0.090</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.02 0.02 0.02 1</ambient>
+          <diffuse>0.02 0.02 0.02 1</diffuse>
+        </material>
+      </visual>
+      <visual name="lidar_mount_base_visual">
+        <pose>0.036 0 0.300 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.165 0.120 0.022</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.02 0.02 0.02 1</ambient>
+          <diffuse>0.02 0.02 0.02 1</diffuse>
+        </material>
+      </visual>
+      <visual name="lidar_support_post_visual">
+        <pose>0.036 0 0.405 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.012</radius>
+            <length>0.190</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.02 0.02 0.02 1</ambient>
+          <diffuse>0.02 0.02 0.02 1</diffuse>
+        </material>
+      </visual>
+      <visual name="sensor_mast_top_bar_visual">
+        <pose>0.036 0 0.505 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.140 0.026 0.018</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.02 0.02 0.02 1</ambient>
+          <diffuse>0.02 0.02 0.02 1</diffuse>
+        </material>
+      </visual>
+      <collision name="left_hull_collision">
+        <pose>0.048 0.260 0.040 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.484 0.087 0.136</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="right_hull_collision">
+        <pose>0.048 -0.260 0.040 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.484 0.087 0.136</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="deck_contact_collision">
+        <pose>0.147 0 0.240 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.831 0.199 0.026</size>
+          </box>
+        </geometry>
+      </collision>
+      <inertial>
+        <pose>0.120 0 -0.190 0 0 0</pose>
+        <mass>7.2</mass>
+        <inertia>
+          <ixx>0.155</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.460</iyy>
+          <iyz>0</iyz>
+          <izz>0.560</izz>
+        </inertia>
+      </inertial>
+      <!-- Detect contacts on the main hull/deck collisions. This reports
+           collision events without disabling the pose-based marine controller. -->
+      <sensor name="hull_contact_sensor" type="contact">
+        <contact>
+          <collision>left_hull_collision</collision>
+          <collision>right_hull_collision</collision>
+          <collision>deck_contact_collision</collision>
+          <topic>/asv/collisions/hull</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    </link>
+
+    <link name="left_thruster_servo_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="left_thruster_steering_joint">0 0 0 0 0 0</pose>
+      <visual name="left_thruster_housing_visual">
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/meshes/housing.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="left_thruster_mount_visual">
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/meshes/mount.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="left_thruster_shaft_visual">
+        <pose>0.033 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.095 0.018 0.018</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.015 0.015 0.015 1</ambient>
+          <diffuse>0.015 0.015 0.015 1</diffuse>
+        </material>
+      </visual>
+      <visual name="left_servo_horn_visual">
+        <pose>0 0 0.055 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.028</radius>
+            <length>0.012</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.06 0.06 0.055 1</ambient>
+          <diffuse>0.06 0.06 0.055 1</diffuse>
+          <specular>0.22 0.22 0.20 1</specular>
+        </material>
+      </visual>
+      <visual name="left_steering_yoke_visual">
+        <pose>0.005 0 0.037 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.050 0.090 0.012</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.04 0.04 0.038 1</ambient>
+          <diffuse>0.04 0.04 0.038 1</diffuse>
+        </material>
+      </visual>
+      <collision name="left_thruster_servo_collision">
+        <geometry><box><size>0.090 0.063 0.063</size></box></geometry>
+      </collision>
+      <inertial>
+        <mass>0.20</mass>
+        <inertia>
+          <ixx>0.00028</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.00034</iyy>
+          <iyz>0</iyz>
+          <izz>0.00034</izz>
+        </inertia>
+      </inertial>
+      <sensor name="left_thruster_contact_sensor" type="contact">
+        <contact>
+          <collision>left_thruster_servo_collision</collision>
+          <topic>/asv/collisions/left_thruster</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    </link>
+    <joint name="left_thruster_steering_joint" type="revolute">
+      <pose relative_to="base_link">-0.150 0.264 -0.090 0 0 0</pose>
+      <parent>base_link</parent>
+      <child>left_thruster_servo_link</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-0.785398</lower>
+          <upper>0.785398</upper>
+          <effort>12</effort>
+          <velocity>2.0</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.20</damping>
+          <friction>0.02</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <link name="right_thruster_servo_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="right_thruster_steering_joint">0 0 0 0 0 0</pose>
+      <visual name="right_thruster_housing_visual">
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/meshes/housing.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="right_thruster_mount_visual">
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/meshes/mount.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="right_thruster_shaft_visual">
+        <pose>0.033 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.095 0.018 0.018</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.015 0.015 0.015 1</ambient>
+          <diffuse>0.015 0.015 0.015 1</diffuse>
+        </material>
+      </visual>
+      <visual name="right_servo_horn_visual">
+        <pose>0 0 0.055 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.028</radius>
+            <length>0.012</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.06 0.06 0.055 1</ambient>
+          <diffuse>0.06 0.06 0.055 1</diffuse>
+          <specular>0.22 0.22 0.20 1</specular>
+        </material>
+      </visual>
+      <visual name="right_steering_yoke_visual">
+        <pose>0.005 0 0.037 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.050 0.090 0.012</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.04 0.04 0.038 1</ambient>
+          <diffuse>0.04 0.04 0.038 1</diffuse>
+        </material>
+      </visual>
+      <collision name="right_thruster_servo_collision">
+        <geometry><box><size>0.090 0.063 0.063</size></box></geometry>
+      </collision>
+      <inertial>
+        <mass>0.20</mass>
+        <inertia>
+          <ixx>0.00028</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.00034</iyy>
+          <iyz>0</iyz>
+          <izz>0.00034</izz>
+        </inertia>
+      </inertial>
+      <sensor name="right_thruster_contact_sensor" type="contact">
+        <contact>
+          <collision>right_thruster_servo_collision</collision>
+          <topic>/asv/collisions/right_thruster</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    </link>
+    <joint name="right_thruster_steering_joint" type="revolute">
+      <pose relative_to="base_link">-0.150 -0.264 -0.090 0 0 0</pose>
+      <parent>base_link</parent>
+      <child>right_thruster_servo_link</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-0.785398</lower>
+          <upper>0.785398</upper>
+          <effort>12</effort>
+          <velocity>2.0</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.20</damping>
+          <friction>0.02</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <link name="left_propeller_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="left_propeller_joint">0 0 0 0 0 0</pose>
+      <visual name="left_propeller_mesh_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/meshes/prop.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="left_propeller_collision">
+        <pose>0 0 0 0 1.570796 0</pose>
+        <geometry><cylinder><radius>0.045</radius><length>0.026</length></cylinder></geometry>
+      </collision>
+      <inertial>
+        <mass>0.05</mass>
+        <inertia>
+          <ixx>0.000035</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000035</iyy>
+          <iyz>0</iyz>
+          <izz>0.000060</izz>
+        </inertia>
+      </inertial>
+      <sensor name="left_propeller_contact_sensor" type="contact">
+        <contact>
+          <collision>left_propeller_collision</collision>
+          <topic>/asv/collisions/left_propeller</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    </link>
+    <joint name="left_propeller_joint" type="revolute">
+      <pose relative_to="left_thruster_servo_link">0 0 0 0 0 0</pose>
+      <parent>left_thruster_servo_link</parent>
+      <child>left_propeller_link</child>
+      <axis>
+        <xyz>1 0 0</xyz>
+        <limit>
+          <effort>40.0</effort>
+          <velocity>300.0</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.05</damping>
+          <friction>0.01</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <link name="right_propeller_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="right_propeller_joint">0 0 0 0 0 0</pose>
+      <visual name="right_propeller_mesh_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/meshes/prop.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.65 0.65 0.65 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Albedo.png</albedo_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/vrx/vrx_gz/models/roboboat01/materials/textures/Thruster_Roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="right_propeller_collision">
+        <pose>0 0 0 0 1.570796 0</pose>
+        <geometry><cylinder><radius>0.045</radius><length>0.026</length></cylinder></geometry>
+      </collision>
+      <inertial>
+        <mass>0.05</mass>
+        <inertia>
+          <ixx>0.000035</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000035</iyy>
+          <iyz>0</iyz>
+          <izz>0.000060</izz>
+        </inertia>
+      </inertial>
+      <sensor name="right_propeller_contact_sensor" type="contact">
+        <contact>
+          <collision>right_propeller_collision</collision>
+          <topic>/asv/collisions/right_propeller</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    </link>
+    <joint name="right_propeller_joint" type="revolute">
+      <pose relative_to="right_thruster_servo_link">0 0 0 0 0 0</pose>
+      <parent>right_thruster_servo_link</parent>
+      <child>right_propeller_link</child>
+      <axis>
+        <xyz>1 0 0</xyz>
+        <limit>
+          <effort>40.0</effort>
+          <velocity>300.0</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.05</damping>
+          <friction>0.01</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <link name="imu_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="base_link">0.000 0 0.220 0 0 0</pose>
+      <inertial>
+        <mass>0.02</mass>
+        <inertia>
+          <ixx>0.000010</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000010</iyy>
+          <iyz>0</iyz>
+          <izz>0.000010</izz>
+        </inertia>
+      </inertial>
+      <sensor name="imu_sensor" type="imu">
+        <topic>/asv/imu/data</topic>
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+      </sensor>
+    </link>
+    <joint name="imu_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>imu_link</child>
+    </joint>
+
+    <link name="gps_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="base_link">0.020 0 0.530 0 0 0</pose>
+      <inertial>
+        <mass>0.05</mass>
+        <inertia>
+          <ixx>0.000030</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000030</iyy>
+          <iyz>0</iyz>
+          <izz>0.000030</izz>
+        </inertia>
+      </inertial>
+      <sensor name="gps_sensor" type="navsat">
+        <topic>/asv/gps/fix</topic>
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <navsat>
+          <position_sensing>
+            <horizontal>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>0.6</stddev>
+              </noise>
+            </horizontal>
+            <vertical>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>1.0</stddev>
+              </noise>
+            </vertical>
+          </position_sensing>
+        </navsat>
+      </sensor>
+    </link>
+    <joint name="gps_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>gps_link</child>
+    </joint>
+
+    <link name="lidar_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="base_link">0.036 0 0.520 0 0 0</pose>
+      <inertial>
+        <mass>0.12</mass>
+        <inertia>
+          <ixx>0.000150</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000150</iyy>
+          <iyz>0</iyz>
+          <izz>0.000180</izz>
+        </inertia>
+      </inertial>
+      <visual name="vrx_3d_lidar_visual">
+        <pose>0 0 -0.035 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models/asv_kki_2026/meshes/vrx_3d_lidar/3d_lidar.dae</uri>
+            <scale>0.60 0.60 0.60</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1</diffuse>
+          <specular>0.6 0.6 0.6 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models/asv_kki_2026/meshes/vrx_3d_lidar/3d_Lidar_Albedo.png</albedo_map>
+              <normal_map>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models/asv_kki_2026/meshes/vrx_3d_lidar/3d_Lidar_Normal.png</normal_map>
+              <roughness_map>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models/asv_kki_2026/meshes/vrx_3d_lidar/3d_Lidar_Roughness.png</roughness_map>
+              <metalness_map>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_description/models/asv_kki_2026/meshes/vrx_3d_lidar/3d_Lidar_Metalness.png</metalness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="lidar_collision">
+        <geometry>
+          <box>
+            <size>0.110 0.110 0.075</size>
+          </box>
+        </geometry>
+      </collision>
+      <sensor name="lidar_contact_sensor" type="contact">
+        <contact>
+          <collision>lidar_collision</collision>
+          <topic>/asv/collisions/lidar</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+      <sensor name="lidar_sensor" type="gpu_lidar">
+        <topic>/asv/lidar/scan</topic>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <update_rate>15</update_rate>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.14159</min_angle>
+              <max_angle>3.14159</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.45</min>
+            <max>35.0</max>
+            <resolution>0.02</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.015</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </link>
+    <joint name="lidar_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>lidar_link</child>
+    </joint>
+
+    <link name="front_camera_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="base_link">0.430 0 0.400 0 0.100 0</pose>
+      <inertial>
+        <mass>0.08</mass>
+        <inertia>
+          <ixx>0.000060</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000050</iyy>
+          <iyz>0</iyz>
+          <izz>0.000080</izz>
+        </inertia>
+      </inertial>
+      <visual name="front_camera_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.064 0.085 0.052</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.01 0.01 0.01 1</ambient>
+          <diffuse>0.01 0.01 0.01 1</diffuse>
+        </material>
+      </visual>
+      <visual name="front_camera_lens_visual">
+        <pose>0.040 0 0 0 1.570796 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.020</radius>
+            <length>0.018</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.04 0.05 0.06 1</ambient>
+          <diffuse>0.04 0.05 0.06 1</diffuse>
+          <specular>0.45 0.55 0.65 1</specular>
+        </material>
+      </visual>
+      <collision name="front_camera_collision">
+        <geometry><box><size>0.080 0.090 0.060</size></box></geometry>
+      </collision>
+      <sensor name="front_camera_contact_sensor" type="contact">
+        <contact>
+          <collision>front_camera_collision</collision>
+          <topic>/asv/collisions/front_camera</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+      <sensor name="front_camera_sensor" type="camera">
+        <topic>/asv/camera/front/image</topic>
+        <always_on>true</always_on>
+        <update_rate>20</update_rate>
+        <visualize>true</visualize>
+        <camera>
+          <horizontal_fov>1.3962634</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>80.0</far>
+          </clip>
+        </camera>
+      </sensor>
+    </link>
+    <joint name="front_camera_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>front_camera_link</child>
+    </joint>
+
+    <link name="down_camera_link">
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <pose relative_to="base_link">0.120 0 0.110 0 1.570796 0</pose>
+      <inertial>
+        <mass>0.05</mass>
+        <inertia>
+          <ixx>0.000025</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000020</iyy>
+          <iyz>0</iyz>
+          <izz>0.000030</izz>
+        </inertia>
+      </inertial>
+      <visual name="down_camera_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.040 0.060 0.040</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.01 0.01 0.01 1</ambient>
+          <diffuse>0.01 0.01 0.01 1</diffuse>
+        </material>
+      </visual>
+      <visual name="down_camera_lens_visual">
+        <pose>0.030 0 0 0 1.570796 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.016</radius>
+            <length>0.014</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.04 0.05 0.06 1</ambient>
+          <diffuse>0.04 0.05 0.06 1</diffuse>
+          <specular>0.45 0.55 0.65 1</specular>
+        </material>
+      </visual>
+      <collision name="down_camera_collision">
+        <geometry><box><size>0.060 0.070 0.050</size></box></geometry>
+      </collision>
+      <sensor name="down_camera_contact_sensor" type="contact">
+        <contact>
+          <collision>down_camera_collision</collision>
+          <topic>/asv/collisions/down_camera</topic>
+        </contact>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+      <sensor name="down_camera_sensor" type="camera">
+        <topic>/asv/camera/down/image</topic>
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <camera>
+          <horizontal_fov>1.0471976</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>10.0</far>
+          </clip>
+        </camera>
+      </sensor>
+    </link>
+    <joint name="down_camera_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>down_camera_link</child>
+    </joint>
+
+    <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher"/>
+
+    <plugin filename="gz-sim-odometry-publisher-system"
+            name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>odom</odom_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_topic>/asv/odom</odom_topic>
+      <dimensions>3</dimensions>
+    </plugin>
+
+    <plugin filename="gz-sim-pose-publisher-system"
+            name="gz::sim::systems::PosePublisher">
+      <publish_link_pose>true</publish_link_pose>
+      <use_pose_vector_msg>true</use_pose_vector_msg>
+      <static_publisher>true</static_publisher>
+      <static_update_frequency>1</static_update_frequency>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-controller-system"
+            name="gz::sim::systems::JointController">
+      <joint_name>left_propeller_joint</joint_name>
+      <initial_velocity>0.0</initial_velocity>
+      <p_gain>0.20</p_gain>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-controller-system"
+            name="gz::sim::systems::JointController">
+      <joint_name>right_propeller_joint</joint_name>
+      <initial_velocity>0.0</initial_velocity>
+      <p_gain>0.20</p_gain>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>left_thruster_steering_joint</joint_name>
+      <topic>/asv/thrusters/left_steering/cmd_pos</topic>
+      <p_gain>8.0</p_gain>
+      <i_gain>0.0</i_gain>
+      <d_gain>0.8</d_gain>
+      <cmd_max>20.0</cmd_max>
+      <cmd_min>-20.0</cmd_min>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+      <joint_name>right_thruster_steering_joint</joint_name>
+      <topic>/asv/thrusters/right_steering/cmd_pos</topic>
+      <p_gain>8.0</p_gain>
+      <i_gain>0.0</i_gain>
+      <d_gain>0.8</d_gain>
+      <cmd_max>20.0</cmd_max>
+      <cmd_min>-20.0</cmd_min>
+    </plugin>
+
+    <!-- Planar ASV motion is computed from propeller thrust and servo angle by
+         asv_control/planar_pose_controller. Keeping Gazebo hydrodynamics active
+         here adds a second force model and can flip the lightweight prototype. -->
+  </model>
+</sdf>

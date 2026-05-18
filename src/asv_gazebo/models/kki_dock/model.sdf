@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="kki_dock">
+    <static>true</static>
+    <link name="base_link">
+      <visual name="dock_visual">
+        <pose>0 0 0.08 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.6 0.65 0.16</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.45 0.38 0.28 1</ambient>
+          <diffuse>0.45 0.38 0.28 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <!-- Dock body is solid for first-contact docking scoring. -->
+        <pose>0 0 0.08 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.6 0.65 0.16</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

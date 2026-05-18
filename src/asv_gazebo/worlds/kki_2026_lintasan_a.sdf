@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="kki_2026_lintasan_a">
+    <physics name="kki_4ms" type="dart">
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>1.470000</latitude_deg>
+      <longitude_deg>102.110000</longitude_deg>
+      <elevation>0.0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+      <background_color>0.70 0.82 0.92</background_color>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
+    <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>
+    <!-- The ASV model keeps its own planar marine dynamics. The water/wave
+         surface remains visual so global buoyancy cannot flip the small hull. -->
+
+    <scene>
+      <ambient>0.75 0.78 0.80 1</ambient>
+      <background>0.70 0.82 0.92 1</background>
+      <sky/>
+    </scene>
+
+    <gui fullscreen="0">
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui>
+          <title>3D View</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.75 0.78 0.80</ambient_light>
+        <background_color>0.70 0.82 0.92</background_color>
+        <camera_pose>0 -33 32 0 0.78 1.5708</camera_pose>
+        <camera_clip><near>0.1</near><far>500</far></camera_clip>
+      </plugin>
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu"/>
+      <plugin filename="GzSceneManager" name="Scene Manager"/>
+      <plugin filename="InteractiveViewControl" name="Interactive view control"/>
+      <plugin filename="CameraTracking" name="Camera Tracking"/>
+      <plugin filename="Spawn" name="Spawn Entities"/>
+      <plugin filename="WorldControl" name="World control">
+        <play_pause>true</play_pause>
+        <step>true</step>
+        <start_paused>false</start_paused>
+        <use_event>true</use_event>
+      </plugin>
+      <plugin filename="WorldStats" name="World stats">
+        <gz-gui>
+          <title>World stats</title>
+          <property type="bool" key="showTitleBar">true</property>
+          <property type="bool" key="resizable">true</property>
+          <property type="double" key="height">96</property>
+          <property type="double" key="width">300</property>
+          <property type="double" key="z">1</property>
+          <property type="string" key="state">floating</property>
+        </gz-gui>
+        <sim_time>true</sim_time>
+        <real_time>true</real_time>
+        <real_time_factor>false</real_time_factor>
+        <iterations>true</iterations>
+      </plugin>
+    </gui>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 40 0 0 0</pose>
+      <diffuse>0.95 0.92 0.85 1</diffuse>
+      <specular>0.45 0.45 0.45 1</specular>
+      <direction>-0.45 0.15 -0.88</direction>
+    </light>
+
+    <include>
+      <name>kki_ocean_waves</name>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_ocean_waves</uri>
+    </include>
+
+    <include><name>start_finish_a</name><pose>12.200 -11.900 0.020 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_start_finish_marker</uri></include>
+    <include><name>area_docking_a</name><pose>13.500 -9.400 0.020 0.000000 0.000000 1.570796</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_dock</uri></include>
+    <include><name>docking_a_blue_1</name><pose>12.350 -10.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_blue</uri></include>
+    <include><name>docking_a_blue_2</name><pose>12.350 -9.700 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_blue</uri></include>
+    <include><name>docking_a_blue_3</name><pose>12.350 -9.400 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_blue</uri></include>
+    <include><name>left_gate_1_green</name><pose>-13.000 0.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>left_gate_1_red</name><pose>-11.000 0.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>left_gate_2_green</name><pose>-13.000 4.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>left_gate_2_red</name><pose>-11.000 4.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>left_gate_3_green</name><pose>-13.000 8.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>left_gate_3_red</name><pose>-11.000 8.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>top_gate_4_green</name><pose>-5.200 13.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>top_gate_4_red</name><pose>-5.200 11.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>top_gate_5_green</name><pose>-1.400 13.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>top_gate_5_red</name><pose>-1.400 11.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>top_gate_6_green</name><pose>2.400 13.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>top_gate_6_red</name><pose>2.400 11.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>top_gate_7_green</name><pose>6.200 13.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>top_gate_7_red</name><pose>6.200 11.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>right_gate_8_red</name><pose>11.000 0.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>right_gate_8_green</name><pose>13.000 0.000 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>right_gate_9_red</name><pose>11.000 4.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>right_gate_9_green</name><pose>13.000 4.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>right_gate_10_red</name><pose>11.000 8.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_red</uri></include>
+    <include><name>right_gate_10_green</name><pose>13.000 8.800 0.100 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_buoy_green</uri></include>
+    <include><name>green_top_target_a</name><pose>-10.200 -5.400 0.000 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_surface_target</uri></include>
+    <include><name>blue_top_target_a</name><pose>-11.000 -7.700 0.000 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_underwater_target</uri></include>
+    <include><name>floating_obstacle_a_01</name><pose>-3.000 -2.000 0.350 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_obstacle_yellow</uri></include>
+    <include><name>floating_obstacle_a_02</name><pose>6.800 2.400 0.350 0.000000 0.000000 0.000000</pose><uri>file:///home/ammar/Documents/asv_simulation/asv_kki_2026_ws/src/asv_gazebo/models/kki_obstacle_yellow</uri></include>
+
+  </world>
+</sdf>
