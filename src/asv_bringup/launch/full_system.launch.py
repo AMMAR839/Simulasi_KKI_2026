@@ -38,6 +38,7 @@ def generate_launch_description():
                 auto_mode,
                 "'.lower() in ['false', '0', 'no']",
             ]
+            
         )
     )
 
@@ -77,12 +78,12 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument("spawn_x", default_value="10.8"),
             DeclareLaunchArgument("spawn_y", default_value="-8.7"),
-            DeclareLaunchArgument("spawn_z", default_value="0.03"),
+            DeclareLaunchArgument("spawn_z", default_value="0.12"),
             DeclareLaunchArgument("spawn_yaw", default_value="1.2405"),
             DeclareLaunchArgument("world_name", default_value="kki_2026_lintasan_a"),
             DeclareLaunchArgument(
                 "show_lidar_visual",
-                default_value="true",
+                default_value="false",
                 description="Set false to hide Gazebo LiDAR rays while keeping the sensor topic active.",
             ),
             include_launch(

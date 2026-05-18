@@ -7,16 +7,20 @@ simple_joystick_teleop:
     coalesce_interval_ms: 1
     # Xbox left stick up/down. Axis 1 controls throttle: forward/backward movement.
     axis_linear_x: 1
-    scale_linear_x: 1.2
-    scale_linear_turbo_x: 1.8
+    # Linux Xbox sticks usually report up/left as -1, so negative scale makes
+    # stick-up become forward and stick-left become left turn.
+    scale_linear_x: -1.2
+    scale_linear_turbo_x: -1.8
     # Xbox left stick left/right. Axis 0 controls steering: left/right yaw command.
     axis_angular_yaw: 0
-    scale_angular_yaw: 0.9
-    scale_angular_turbo_yaw: 1.4
-    # Xbox: hold X button 2 for normal manual drive, hold Y button 3 for turbo.
+    scale_angular_yaw: -0.9
+    scale_angular_turbo_yaw: -1.4
+    # Xbox simulation default: left stick moves immediately. Set
+    # require_enable_button=true if you want X as a deadman button.
     enable_button: 2
     enable_turbo_button: 3
-    require_enable_button: true
+    require_enable_button: false
+    status_rate_hz: 1.0
 
 joystick_mode_manager:
   ros__parameters:

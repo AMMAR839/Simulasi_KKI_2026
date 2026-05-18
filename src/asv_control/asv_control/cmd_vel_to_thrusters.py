@@ -5,6 +5,7 @@ import time
 import rclpy
 from geometry_msgs.msg import Twist
 from rcl_interfaces.msg import SetParametersResult
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Float64, String
 
@@ -79,6 +80,7 @@ class CmdVelToThrusters(Node):
 
         self.last_cmd = Twist()
         self.last_cmd_time = 0.0
+        self.last_nonzero_log = 0.0
         rate = float(self.get_parameter("publish_rate_hz").value)
         self.create_timer(1.0 / max(rate, 1.0), self.on_timer)
 
@@ -146,6 +148,14 @@ class CmdVelToThrusters(Node):
     def on_cmd_vel(self, msg: Twist):
         self.last_cmd = msg
         self.last_cmd_time = time.monotonic()
+        if abs(msg.linear.x) > 0.02 or abs(msg.angular.z) > 0.02:
+            now = time.monotonic()
+            if now - self.last_nonzero_log > 1.0:
+                self.get_logger().info(
+                    f"cmd_vel received: vx={msg.linear.x:.2f}, "
+                    f"wz={msg.angular.z:.2f}"
+                )
+                self.last_nonzero_log = now
 
     def on_timer(self):
         if time.monotonic() - self.last_cmd_time > self.timeout:
@@ -221,7 +231,7 @@ def main(args=None):
     node = CmdVelToThrusters()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

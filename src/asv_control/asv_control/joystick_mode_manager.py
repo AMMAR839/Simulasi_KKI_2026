@@ -30,12 +30,18 @@ class JoystickModeManager(Node):
     def on_joy(self, msg: Joy):
         # Button edges are used so one press sends one mode/stop command.
         if self._pressed(msg, self.manual_button):
+            self.get_logger().info(f"Joystick button {self.manual_button}: manual mode")
             self.mode_pub.publish(String(data="manual"))
         if self._pressed(msg, self.auto_button):
+            self.get_logger().info(f"Joystick button {self.auto_button}: auto mode")
             self.mode_pub.publish(String(data="auto"))
         if self._pressed(msg, self.estop_button):
+            self.get_logger().warn(f"Joystick button {self.estop_button}: emergency stop")
             self.estop = True
         if self._pressed(msg, self.clear_estop_button):
+            self.get_logger().info(
+                f"Joystick button {self.clear_estop_button}: clear emergency stop"
+            )
             self.estop = False
         self.estop_pub.publish(Bool(data=self.estop))
         self.previous_buttons = list(msg.buttons)

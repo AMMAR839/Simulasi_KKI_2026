@@ -23,7 +23,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "show_lidar_visual",
-                default_value="true",
+                default_value="false",
                 description="Show/hide Gazebo LiDAR rays without disabling the LiDAR sensor.",
             ),
             IncludeLaunchDescription(
@@ -49,7 +49,7 @@ def generate_launch_description():
                     ),
                     "spawn_x": "10.8",
                     "spawn_y": "-8.7",
-                    "spawn_z": "0.03",
+                    "spawn_z": "0.12",
                     "spawn_yaw": "1.2405",
                     "world_name": "kki_2026_lintasan_a",
                     "course": "a",

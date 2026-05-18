@@ -144,7 +144,7 @@ Default mapping untuk stick Xbox di Linux:
 
 - Left stick atas/bawah, Axis `1`: throttle maju/mundur.
 - Left stick kiri/kanan, Axis `0`: steering kiri/kanan.
-- Tombol `X`, Button `2`: tahan untuk enable normal manual drive.
+- Tombol `X`, Button `2`: opsional deadman jika `require_enable_button:=true`.
 - Tombol `Y`, Button `3`: tahan untuk turbo.
 - Tombol `RB`, Button `5`: switch ke autonomous mode.
 - Tombol `LB`, Button `4`: kembali ke manual mode.
@@ -154,17 +154,25 @@ Default mapping untuk stick Xbox di Linux:
 Cara pakai manual mode dengan stick Xbox:
 
 1. Jalankan simulasi manual dengan `auto_mode:=false`.
-2. Tahan tombol `X`, lalu gerakkan left stick atas/bawah untuk maju/mundur.
-3. Saat tombol `X` masih ditahan, gerakkan left stick kiri/kanan untuk belok.
+2. Gerakkan left stick atas/bawah untuk maju/mundur.
+3. Gerakkan left stick kiri/kanan untuk belok.
 4. Tahan tombol `Y` untuk mode turbo.
 5. Tekan `RB` untuk pindah ke autonomous.
 6. Tekan `LB` untuk balik ke manual.
 7. Tekan `B` untuk emergency stop, lalu tekan `A` untuk clear stop.
 
+Default simulasi sekarang memakai `require_enable_button: false`, jadi kapal
+langsung merespons left stick. Kalau ingin mode lebih aman seperti deadman
+switch, ubah `require_enable_button: true` di `src/asv_control/config/joystick.yaml`;
+setelah itu tombol `X` harus ditahan agar command manual keluar.
+
 Cek apakah tombol stick Xbox terbaca:
 
 ```bash
 ros2 topic echo /joy
+ros2 topic echo /asv/control/joystick_status
+ros2 topic echo /cmd_vel_manual
+ros2 topic echo /asv/control/mode_status
 ```
 
 Kalau nomor axis/button berbeda di laptop tertentu, cek device Linux dengan:
@@ -174,6 +182,10 @@ jstest /dev/input/js0
 ```
 
 Lalu sesuaikan angka `axis_linear_x`, `axis_angular_yaw`, `enable_button`, `auto_button`, dan tombol lain di `src/asv_control/config/joystick.yaml`.
+
+Kalau arah maju/mundur atau kiri/kanan terbalik, balik tanda plus/minus pada
+`scale_linear_x`, `scale_linear_turbo_x`, `scale_angular_yaw`, atau
+`scale_angular_turbo_yaw` di file yang sama.
 
 Alur kontrol:
 

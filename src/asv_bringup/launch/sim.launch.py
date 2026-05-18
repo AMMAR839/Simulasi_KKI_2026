@@ -108,12 +108,12 @@ def generate_launch_description():
             DeclareLaunchArgument("world", default_value=default_world),
             DeclareLaunchArgument("spawn_x", default_value="10.8"),
             DeclareLaunchArgument("spawn_y", default_value="-8.7"),
-            DeclareLaunchArgument("spawn_z", default_value="0.03"),
+            DeclareLaunchArgument("spawn_z", default_value="0.12"),
             DeclareLaunchArgument("spawn_yaw", default_value="1.2405"),
             DeclareLaunchArgument("world_name", default_value="kki_2026_lintasan_a"),
             DeclareLaunchArgument(
                 "show_lidar_visual",
-                default_value="true",
+                default_value="false",
                 description="Show/hide Gazebo LiDAR rays without disabling /asv/lidar/scan.",
             ),
             SetEnvironmentVariable(
@@ -201,19 +201,26 @@ def generate_launch_description():
                 output="screen",
                 parameters=[{"use_sim_time": use_sim_time}],
             ),
-            Node(
-                package="asv_control",
-                executable="planar_pose_controller",
-                name="planar_pose_controller",
-                output="screen",
-                parameters=[
-                    {
-                        "world_name": world_name,
-                        "spawn_x": spawn_x,
-                        "spawn_y": spawn_y,
-                        "surface_z": spawn_z,
-                        "spawn_yaw": spawn_yaw,
-                    }
+            TimerAction(
+                period=2.0,
+                actions=[
+                    Node(
+                        package="asv_control",
+                        executable="planar_pose_controller",
+                        name="planar_pose_controller",
+                        output="screen",
+                        parameters=[
+                            {
+                                "world_name": world_name,
+                                "spawn_x": spawn_x,
+                                "spawn_y": spawn_y,
+                                "surface_z": spawn_z,
+                                "spawn_yaw": spawn_yaw,
+                                "pose_rate_hz": 10.0,
+                                "minimum_visual_z": 0.09,
+                            }
+                        ],
+                    )
                 ],
             ),
         ]

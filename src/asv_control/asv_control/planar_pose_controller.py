@@ -7,6 +7,7 @@ from gz.msgs10.boolean_pb2 import Boolean
 from gz.msgs10.pose_pb2 import Pose
 from gz.transport13 import Node as GzNode
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Float64, String
 
@@ -64,7 +65,8 @@ class PlanarPoseController(Node):
         self.declare_parameter("command_timeout_s", 0.7)
         self.declare_parameter("spawn_x", 10.8)
         self.declare_parameter("spawn_y", -8.7)
-        self.declare_parameter("surface_z", 0.03)
+        self.declare_parameter("surface_z", 0.12)
+        self.declare_parameter("minimum_visual_z", 0.09)
         self.declare_parameter("spawn_yaw", 1.2405)
         self.declare_parameter("mass_kg", 7.7)
         self.declare_parameter("yaw_inertia_kgm2", 0.56)
@@ -80,11 +82,12 @@ class PlanarPoseController(Node):
         self.declare_parameter("max_lateral_speed_mps", 0.18)
         self.declare_parameter("max_yaw_rate_radps", 0.80)
         self.declare_parameter("wave_effect_enabled", True)
-        self.declare_parameter("wave_amplitude_m", 0.025)
+        self.declare_parameter("wave_amplitude_m", 0.018)
         self.declare_parameter("wave_period_s", 3.5)
         self.declare_parameter("wave_roll_deg", 2.2)
         self.declare_parameter("wave_pitch_deg", 1.6)
         self.declare_parameter("service_timeout_ms", 1000)
+        self.declare_parameter("startup_grace_s", 8.0)
 
         self.world_name = str(self.get_parameter("world_name").value)
         self.model_name = str(self.get_parameter("model_name").value)
@@ -94,6 +97,7 @@ class PlanarPoseController(Node):
         self.x = float(self.get_parameter("spawn_x").value)
         self.y = float(self.get_parameter("spawn_y").value)
         self.z = float(self.get_parameter("surface_z").value)
+        self.minimum_visual_z = float(self.get_parameter("minimum_visual_z").value)
         self.yaw = normalize_angle(float(self.get_parameter("spawn_yaw").value))
         self.u = 0.0
         self.v = 0.0
@@ -120,6 +124,7 @@ class PlanarPoseController(Node):
         self.wave_pitch = math.radians(float(self.get_parameter("wave_pitch_deg").value))
         self.timeout = float(self.get_parameter("command_timeout_s").value)
         self.service_timeout = int(self.get_parameter("service_timeout_ms").value)
+        self.startup_grace = float(self.get_parameter("startup_grace_s").value)
 
         self.last_cmd = Twist()
         self.last_cmd_time = 0.0
@@ -129,8 +134,11 @@ class PlanarPoseController(Node):
         self.right_steer = 0.0
         self.last_propulsion_time = 0.0
         self.last_update = time.monotonic()
+        self.startup_time = self.last_update
         self.last_warn = 0.0
         self.last_status = 0.0
+        self.last_pose_result = False
+        self.last_pose_response = False
 
         self.status_pub = self.create_publisher(
             String, "/asv/control/planar_pose_status", 10
@@ -200,9 +208,15 @@ class PlanarPoseController(Node):
         self.yaw = normalize_angle(self.yaw + self.r * dt)
 
         ok = self.set_model_pose()
-        if not ok and now - self.last_warn > 2.0:
+        if (
+            not ok
+            and now - self.startup_time > self.startup_grace
+            and now - self.last_warn > 2.0
+        ):
             self.get_logger().warn(
-                f"Waiting for Gazebo pose service/model on {self.service}"
+                f"Waiting for Gazebo pose service/model on {self.service}; "
+                f"model={self.model_name} result={self.last_pose_result} "
+                f"response={self.last_pose_response}"
             )
             self.last_warn = now
 
@@ -214,6 +228,8 @@ class PlanarPoseController(Node):
                         f"ok={ok} x={self.x:.2f} y={self.y:.2f} "
                         f"z={self.z + heave:.2f} yaw={math.degrees(self.yaw):.1f}deg "
                         f"model={self.model_name} "
+                        f"pose_result={self.last_pose_result} "
+                        f"pose_response={self.last_pose_response} "
                         f"u={self.u:.2f} r={self.r:.2f} "
                         f"left={self.left_thrust:.1f}N right={self.right_thrust:.1f}N "
                         f"servo_l={math.degrees(self.left_steer):.1f}deg "
@@ -276,13 +292,17 @@ class PlanarPoseController(Node):
         return roll, pitch, heave
 
     def set_model_pose(self):
+        # Use the model name only. Subscribing to the full /pose/info stream
+        # while issuing high-rate blocking pose requests can make Gazebo reject
+        # intermittent requests and show flicker.
         roll, pitch, heave = self.wave_motion(time.monotonic())
         qx, qy, qz, qw = quaternion_from_euler(roll, pitch, self.yaw)
         pose = Pose()
         pose.name = self.model_name
         pose.position.x = self.x
         pose.position.y = self.y
-        pose.position.z = self.z + heave
+        # Keep the visual waterline above the wave mesh to avoid z-fighting flicker.
+        pose.position.z = max(self.minimum_visual_z, self.z + heave)
         pose.orientation.x = qx
         pose.orientation.y = qy
         pose.orientation.z = qz
@@ -290,7 +310,9 @@ class PlanarPoseController(Node):
         result, response = self.gz_node.request(
             self.service, pose, Pose, Boolean, self.service_timeout
         )
-        return bool(result and response.data)
+        self.last_pose_result = bool(result)
+        self.last_pose_response = bool(response.data) if response is not None else False
+        return bool(self.last_pose_result and self.last_pose_response)
 
 
 def main(args=None):
@@ -298,7 +320,7 @@ def main(args=None):
     node = PlanarPoseController()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

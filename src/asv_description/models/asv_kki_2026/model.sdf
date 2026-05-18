@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <sdf version="1.9">
   <model name="asv_kki_2026">
-    <!-- Non-static kinematic model: Gazebo can compute contacts, while the
-         planar controller still owns the stable ASV pose on the water. -->
-    <static>false</static>
+    <!-- Pose-driven marine model. Keep it static in Gazebo physics so the
+         hull cannot fall through the visual wave mesh; planar_pose_controller
+         owns the ASV motion on the water surface. -->
+    <static>true</static>
     <enable_wind>false</enable_wind>
 
     <link name="base_link">

@@ -8,6 +8,15 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
 
+def parameter_as_bool(value) -> bool:
+    """ROS launch substitutions often arrive as strings such as 'false'."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ("true", "1", "yes", "on")
+    return bool(value)
+
+
 class ManualAutonomyMux(Node):
     """Select manual joystick or autonomous waypoint command stream."""
 
@@ -28,6 +37,7 @@ class ManualAutonomyMux(Node):
         self.last_auto_time = 0.0
         self.manual_timeout = float(self.get_parameter("manual_timeout_s").value)
         self.auto_timeout = float(self.get_parameter("auto_timeout_s").value)
+        self.last_logged_mode = None
 
         self.cmd_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.status_pub = self.create_publisher(String, "/asv/control/mode_status", 10)
@@ -39,6 +49,10 @@ class ManualAutonomyMux(Node):
 
         rate = float(self.get_parameter("publish_rate_hz").value)
         self.create_timer(1.0 / max(rate, 1.0), self.on_timer)
+        self.get_logger().info(
+            f"manual_autonomy_mux started in {self.mode} mode "
+            f"(auto_mode={self.get_parameter('auto_mode').value!r})"
+        )
 
     def on_manual(self, msg: Twist):
         self.manual_cmd = msg
@@ -53,8 +67,10 @@ class ManualAutonomyMux(Node):
         if requested in ("manual", "auto", "autonomous"):
             # Joystick buttons or terminal commands can switch modes at runtime.
             self.mode = "auto" if requested == "autonomous" else requested
+            self.get_logger().info(f"Mode changed to {self.mode}")
         elif requested in ("stop", "estop", "emergency_stop"):
             self.estop = True
+            self.get_logger().warn("Emergency stop requested from /asv/mode")
         else:
             self.get_logger().warn(f"Ignoring unknown ASV mode: {msg.data}")
 
@@ -81,11 +97,16 @@ class ManualAutonomyMux(Node):
                 reason = "unknown_mode"
 
         self.cmd_pub.publish(cmd)
+        if self.mode != self.last_logged_mode:
+            self.get_logger().info(f"Active control source: {self.mode}")
+            self.last_logged_mode = self.mode
         self.status_pub.publish(
             String(
                 data=(
                     f"mode={self.mode} estop={self.estop} reason={reason} "
-                    f"vx={cmd.linear.x:.2f} wz={cmd.angular.z:.2f}"
+                    f"vx={cmd.linear.x:.2f} wz={cmd.angular.z:.2f} "
+                    f"manual_age={now - self.last_manual_time:.2f}s "
+                    f"auto_age={now - self.last_auto_time:.2f}s"
                 )
             )
         )
@@ -97,7 +118,8 @@ class ManualAutonomyMux(Node):
         if default_mode == "manual":
             return "manual"
         # Main startup switch: true starts waypoint following, false starts joystick mode.
-        return "auto" if bool(self.get_parameter("auto_mode").value) else "manual"
+        auto_mode = parameter_as_bool(self.get_parameter("auto_mode").value)
+        return "auto" if auto_mode else "manual"
 
 
 def main(args=None):
