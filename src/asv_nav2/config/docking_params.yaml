@@ -1,0 +1,61 @@
+# ============================================================
+# OpenNav Docking Server — ASV KKI 2026
+# ============================================================
+# Handles the final docking maneuver with the blue buoys.
+# Uses LiDAR-based detection and controlled approach.
+#
+# Buoys are at: x=12.35, y=-10.0, -9.7, -9.4
+# Staging pose (approach from west): x=11.0, y=-9.7
+# Dock pose (alongside buoys): x=12.00, y=-9.7
+# ============================================================
+
+docking_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 10.0
+    initial_perception_timeout: 10.0
+    wait_charge_timeout: 5.0
+    dock_approach_timeout: 60.0
+    undock_linear_tolerance: 0.05
+    undock_angular_tolerance: 0.1
+    max_retries: 3
+    base_frame: "base_link"
+    fixed_frame: "map"
+    dock_backwards: false
+    dock_prestaging_tolerance: 0.5
+
+    # ── Docking plugins ────────────────────────────────────
+    dock_plugins: ["kki_blue_buoys"]
+
+    # KKI Blue Buoy dock — approach from west, touch with right side
+    kki_blue_buoys:
+      plugin: "opennav_docking::SimpleNonChargingDock"
+      docking_threshold: 0.40     # Stop when within 0.40m of dock pose
+      staging_x_offset: -1.80    # Staging pose: 1.8m WEST of dock (left side)
+      staging_yaw_offset: 0.0
+      base_frame: "base_link"
+      use_external_detection_pose: false
+      use_stall_detection: false
+      filter_coef: 0.10
+
+    controller:
+      v_linear_min: 0.04
+      v_linear_max: 0.18
+      v_angular_max: 0.45
+      transform_tolerance: 0.5
+      dock_collision_threshold: 0.25
+
+    # ── Dock database ──────────────────────────────────────
+    docks: ["kki_buoy_dock_a", "kki_buoy_dock_b"]
+
+    # Course A buoys dock
+    kki_buoy_dock_a:
+      type: "kki_blue_buoys"
+      frame: "map"
+      pose: [12.35, -9.70, 0.0]   # x, y, yaw (alongside buoy_2)
+
+    # Course B buoys dock (adjust coordinates as needed)
+    kki_buoy_dock_b:
+      type: "kki_blue_buoys"
+      frame: "map"
+      pose: [-12.35, -9.70, 3.14159]

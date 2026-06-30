@@ -1,7 +1,19 @@
+import os
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
+
+
+BASE_LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH", "")
+BASE_GZ_SIM_RESOURCE_PATH = os.environ.get("GZ_SIM_RESOURCE_PATH", "")
+CLEAN_LD_LIBRARY_PATH = EnvironmentVariable(
+    "ASV_CLEAN_LD_LIBRARY_PATH", default_value=BASE_LD_LIBRARY_PATH
+)
+CLEAN_GZ_SIM_RESOURCE_PATH = EnvironmentVariable(
+    "ASV_CLEAN_GZ_SIM_RESOURCE_PATH", default_value=BASE_GZ_SIM_RESOURCE_PATH
+)
 
 
 BRIDGE_ARGUMENTS = [
@@ -37,27 +49,59 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="true"),
-            Node(
-                package="ros_gz_bridge",
-                executable="parameter_bridge",
-                name="asv_gz_bridge",
-                output="screen",
-                arguments=BRIDGE_ARGUMENTS,
-                parameters=[{"use_sim_time": use_sim_time}],
+            TimerAction(
+                period=8.0,
+                actions=[
+                    Node(
+                        package="ros_gz_bridge",
+                        executable="parameter_bridge",
+                        name="asv_gz_bridge",
+                        output="screen",
+                        arguments=BRIDGE_ARGUMENTS,
+                        parameters=[{"use_sim_time": use_sim_time}],
+                    ),
+                ],
             ),
-            Node(
-                package="asv_sensors",
-                executable="sensor_status_monitor",
-                name="sensor_status_monitor",
-                output="screen",
-                parameters=[{"use_sim_time": use_sim_time}],
+            TimerAction(
+                period=10.0,
+                actions=[
+                    Node(
+                        package="asv_sensors",
+                        executable="collision_monitor",
+                        name="asv_contact_monitor",
+                        output="screen",
+                        parameters=[{"use_sim_time": use_sim_time}],
+                    ),
+                ],
             ),
-            Node(
-                package="asv_sensors",
-                executable="collision_monitor",
-                name="collision_monitor",
-                output="screen",
-                parameters=[{"use_sim_time": use_sim_time}],
+            TimerAction(
+                period=50.0,
+                actions=[
+                    ExecuteProcess(
+                        cmd=[
+                            "env",
+                            "-u",
+                            "GZ_SIM_SYSTEM_PLUGIN_PATH",
+                            "-u",
+                            "GZ_RENDERING_PLUGIN_PATH",
+                            "ros2",
+                            "run",
+                            "asv_sensors",
+                            "sensor_status_monitor",
+                            "--ros-args",
+                            "-r",
+                            "__node:=sensor_status_monitor",
+                            "-p",
+                            ["use_sim_time:=", use_sim_time],
+                        ],
+                        name="sensor_status_monitor",
+                        output="screen",
+                        additional_env={
+                            "LD_LIBRARY_PATH": CLEAN_LD_LIBRARY_PATH,
+                            "GZ_SIM_RESOURCE_PATH": CLEAN_GZ_SIM_RESOURCE_PATH,
+                        },
+                    )
+                ],
             ),
         ]
     )

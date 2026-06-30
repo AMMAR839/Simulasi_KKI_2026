@@ -29,6 +29,9 @@ def generate_launch_description():
     spawn_yaw = LaunchConfiguration("spawn_yaw")
     world_name = LaunchConfiguration("world_name")
     show_lidar_visual = LaunchConfiguration("show_lidar_visual")
+    headless = LaunchConfiguration("headless")
+    navigation_start_delay = LaunchConfiguration("navigation_start_delay_s")
+    mission_start_delay = LaunchConfiguration("mission_start_delay_s")
     joystick_condition = IfCondition(
         PythonExpression(
             [
@@ -81,6 +84,14 @@ def generate_launch_description():
             DeclareLaunchArgument("spawn_z", default_value="0.12"),
             DeclareLaunchArgument("spawn_yaw", default_value="1.2405"),
             DeclareLaunchArgument("world_name", default_value="kki_2026_lintasan_a"),
+            DeclareLaunchArgument("navigation_start_delay_s", default_value="35.0"),
+            DeclareLaunchArgument("mission_start_delay_s", default_value="45.0"),
+
+            DeclareLaunchArgument(
+                "headless",
+                default_value="false",
+                description="Run only the Gazebo server without GUI.",
+            ),
             DeclareLaunchArgument(
                 "show_lidar_visual",
                 default_value="true",
@@ -98,13 +109,19 @@ def generate_launch_description():
                     "world_name": world_name,
                     "auto_mode": auto_mode,
                     "show_lidar_visual": show_lidar_visual,
+                    "headless": headless,
                 },
             ),
             include_launch("asv_bringup", "sensors.launch.py"),
             include_launch(
                 "asv_bringup",
                 "navigation.launch.py",
-                launch_arguments={"waypoint_file": waypoint_file, "course": course},
+                launch_arguments={
+                    "waypoint_file": waypoint_file,
+                    "course": course,
+                    "navigation_start_delay_s": navigation_start_delay,
+                    "mission_start_delay_s": mission_start_delay,
+                },
                 condition=IfCondition(use_navigation),
             ),
             include_launch(

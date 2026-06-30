@@ -1,0 +1,110 @@
+<!--
+  KKI Mission Behavior Tree — ASV KKI 2026
+  ==========================================
+  Orchestrates the full competition mission:
+    1. Navigate the survey path (GPS waypoints)
+    2. Photo missions are triggered via mission_supervisor_nav2.py
+       (monitors waypoint index via followWaypoints feedback)
+    3. After survey: dock with blue buoys via DockRobot action
+
+  This BT is used by nav2_bt_navigator for NavigateThroughPoses.
+  The actual mission sequencing (photo → dock) is done in Python
+  via nav2_simple_commander in mission_supervisor_nav2.py.
+-->
+<root BTCPP_format="4" main_tree_to_execute="NavigateThroughPoses">
+
+  <!--==========================================================-->
+  <!-- Navigate Through Poses with replanning and recovery       -->
+  <!--==========================================================-->
+  <BehaviorTree ID="NavigateThroughPoses">
+    <RecoveryNode number_of_retries="6" name="NavigateThroughPosesRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathRecovery">
+            <ComputePathThroughPoses error_code_id="{compute_path_error_code}"
+                                     goals="{goals}"
+                                     path="{path}"
+                                     planner_id="GridBased" />
+            <ReactiveFallback name="ComputePathFallback">
+              <GoalUpdated />
+              <ClearEntireCostmap name="ClearGlobalCostmap-Context"
+                                   service_name="/global_costmap/clear_entirely_global_costmap" />
+            </ReactiveFallback>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPathRecovery">
+          <FollowPath error_code_id="{follow_path_error_code}"
+                      path="{path}"
+                      controller_id="FollowPath" />
+          <ReactiveFallback name="FollowPathFallback">
+            <GoalUpdated />
+            <ClearEntireCostmap name="ClearLocalCostmap-Context"
+                                 service_name="/local_costmap/clear_entirely_local_costmap" />
+          </ReactiveFallback>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated />
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmap-Subtree"
+                                 service_name="/local_costmap/clear_entirely_local_costmap" />
+            <ClearEntireCostmap name="ClearGlobalCostmap-Subtree"
+                                 service_name="/global_costmap/clear_entirely_global_costmap" />
+          </Sequence>
+          <Spin spin_dist="1.57" error_code_id="{spin_error_code}" />
+          <Wait wait_duration="5.0" />
+          <BackUp backup_dist="0.30" backup_speed="0.10" error_code_id="{backup_error_code}" />
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+
+  <!--==========================================================-->
+  <!-- Navigate To Pose (single target) with recovery            -->
+  <!--==========================================================-->
+  <BehaviorTree ID="NavigateToPose">
+    <RecoveryNode number_of_retries="6" name="NavigateToSinglePoseRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathRecovery">
+            <ComputePathToPose error_code_id="{compute_path_error_code}"
+                               goal="{goal}"
+                               path="{path}"
+                               planner_id="GridBased" />
+            <ReactiveFallback name="ComputePathFallback">
+              <GoalUpdated />
+              <ClearEntireCostmap name="ClearGlobalCostmap"
+                                   service_name="/global_costmap/clear_entirely_global_costmap" />
+            </ReactiveFallback>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPathRecovery">
+          <FollowPath error_code_id="{follow_path_error_code}"
+                      path="{path}"
+                      controller_id="FollowPath" />
+          <ReactiveFallback name="FollowPathFallback">
+            <GoalUpdated />
+            <ClearEntireCostmap name="ClearLocalCostmap"
+                                 service_name="/local_costmap/clear_entirely_local_costmap" />
+          </ReactiveFallback>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated />
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmap-Subtree"
+                                 service_name="/local_costmap/clear_entirely_local_costmap" />
+            <ClearEntireCostmap name="ClearGlobalCostmap-Subtree"
+                                 service_name="/global_costmap/clear_entirely_global_costmap" />
+          </Sequence>
+          <Spin spin_dist="1.57" error_code_id="{spin_error_code}" />
+          <Wait wait_duration="5.0" />
+          <BackUp backup_dist="0.30" backup_speed="0.10" error_code_id="{backup_error_code}" />
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+
+</root>

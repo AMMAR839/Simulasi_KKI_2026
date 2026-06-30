@@ -9,6 +9,7 @@ def generate_launch_description():
     auto_mode = LaunchConfiguration("auto_mode")
     use_joystick = LaunchConfiguration("use_joystick")
     show_lidar_visual = LaunchConfiguration("show_lidar_visual")
+    headless = LaunchConfiguration("headless")
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -20,6 +21,11 @@ def generate_launch_description():
                 "use_joystick",
                 default_value="false",
                 description="Also start joystick nodes in auto mode. Manual mode starts joystick automatically.",
+            ),
+            DeclareLaunchArgument(
+                "headless",
+                default_value="false",
+                description="Run only the Gazebo server without GUI.",
             ),
             DeclareLaunchArgument(
                 "show_lidar_visual",
@@ -49,13 +55,14 @@ def generate_launch_description():
                     ),
                     "spawn_x": "-10.8",
                     "spawn_y": "-8.7",
-                    "spawn_z": "0.12",
+                    "spawn_z": "0.02",
                     "spawn_yaw": "1.9011",
                     "world_name": "kki_2026_lintasan_b",
                     "course": "b",
                     "auto_mode": auto_mode,
                     "use_joystick": use_joystick,
                     "show_lidar_visual": show_lidar_visual,
+                    "headless": headless,
                 }.items(),
             )
         ]

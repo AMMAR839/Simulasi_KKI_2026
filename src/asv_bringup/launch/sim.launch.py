@@ -1,13 +1,23 @@
+import os
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable, TimerAction
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    SetEnvironmentVariable,
+    TimerAction,
+)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
 ASV_ROOT = "/home/ammar/Documents/asv_simulation"
+BASE_LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH", "")
+BASE_GZ_SIM_RESOURCE_PATH = os.environ.get("GZ_SIM_RESOURCE_PATH", "")
 REFERENCE_RESOURCE_PATHS = [
     f"{ASV_ROOT}/vrx/vrx_gz/models",
     f"{ASV_ROOT}/vrx/vrx_urdf/vrx_gazebo/models",
@@ -51,28 +61,12 @@ def generate_launch_description():
     spawn_z = LaunchConfiguration("spawn_z")
     spawn_yaw = LaunchConfiguration("spawn_yaw")
     world_name = LaunchConfiguration("world_name")
-    show_lidar_visual = LaunchConfiguration("show_lidar_visual")
+    headless = LaunchConfiguration("headless")
 
     desc_share = FindPackageShare("asv_description")
     gazebo_share = FindPackageShare("asv_gazebo")
     ros_gz_sim_share = FindPackageShare("ros_gz_sim")
 
-    model_source_sdf = PathJoinSubstitution(
-        [desc_share, "models", "asv_kki_2026", "model.sdf"]
-    )
-    configure_model_sdf = PathJoinSubstitution(
-        [desc_share, "scripts", "configure_model_sdf.py"]
-    )
-    model_sdf = Command(
-        [
-            "python3 ",
-            configure_model_sdf,
-            " --input ",
-            model_source_sdf,
-            " --show-lidar-visual ",
-            show_lidar_visual,
-        ]
-    )
     robot_xacro = PathJoinSubstitution(
         [desc_share, "urdf", "asv_kki_2026.urdf.xacro"]
     )
@@ -90,6 +84,46 @@ def generate_launch_description():
     ] + REFERENCE_PLUGIN_PATHS
 
     robot_description = Command(["xacro", " ", robot_xacro])
+    planar_pose_controller = ExecuteProcess(
+        cmd=[
+            "env",
+            "-u",
+            "GZ_SIM_SYSTEM_PLUGIN_PATH",
+            "-u",
+            "GZ_RENDERING_PLUGIN_PATH",
+            "ros2",
+            "run",
+            "asv_control",
+            "planar_pose_controller",
+            "--ros-args",
+            "-r",
+            "__node:=planar_pose_controller",
+            "-p",
+            ["use_sim_time:=", use_sim_time],
+            "-p",
+            ["world_name:=", world_name],
+            "-p",
+            "odom_topic:=/asv/planar_odom",
+            "-p",
+            ["spawn_x:=", spawn_x],
+            "-p",
+            ["spawn_y:=", spawn_y],
+            "-p",
+            ["surface_z:=", spawn_z],
+            "-p",
+            ["spawn_yaw:=", spawn_yaw],
+            "-p",
+            "pose_rate_hz:=10.0",
+            "-p",
+            "minimum_visual_z:=0.01",
+        ],
+        name="planar_pose_controller",
+        output="screen",
+        additional_env={
+            "LD_LIBRARY_PATH": BASE_LD_LIBRARY_PATH,
+            "GZ_SIM_RESOURCE_PATH": BASE_GZ_SIM_RESOURCE_PATH,
+        },
+    )
 
     return LaunchDescription(
         [
@@ -108,13 +142,26 @@ def generate_launch_description():
             DeclareLaunchArgument("world", default_value=default_world),
             DeclareLaunchArgument("spawn_x", default_value="10.8"),
             DeclareLaunchArgument("spawn_y", default_value="-8.7"),
-            DeclareLaunchArgument("spawn_z", default_value="0.12"),
+            DeclareLaunchArgument("spawn_z", default_value="0.02"),
             DeclareLaunchArgument("spawn_yaw", default_value="1.2405"),
             DeclareLaunchArgument("world_name", default_value="kki_2026_lintasan_a"),
+            DeclareLaunchArgument(
+                "headless",
+                default_value="false",
+                description="Run only the Gazebo server without GUI.",
+            ),
             DeclareLaunchArgument(
                 "show_lidar_visual",
                 default_value="true",
                 description="Show Gazebo LiDAR rays. Set false to hide rays without disabling /asv/lidar/scan.",
+            ),
+            SetEnvironmentVariable(
+                name="ASV_CLEAN_LD_LIBRARY_PATH",
+                value=BASE_LD_LIBRARY_PATH,
+            ),
+            SetEnvironmentVariable(
+                name="ASV_CLEAN_GZ_SIM_RESOURCE_PATH",
+                value=BASE_GZ_SIM_RESOURCE_PATH,
             ),
             SetEnvironmentVariable(
                 name="GZ_SIM_RESOURCE_PATH",
@@ -138,7 +185,11 @@ def generate_launch_description():
                 ),
                 launch_arguments={
                     "gz_args": [
-                        "-r -v 3 --physics-engine gz-physics-bullet-featherstone-plugin ",
+                        PythonExpression([
+                            "'-s -r -v 3 --physics-engine gz-physics-bullet-featherstone-plugin ' if '",
+                            headless,
+                            "'.lower() in ['true', '1', 'yes'] else '-r -v 3 --physics-engine gz-physics-bullet-featherstone-plugin '"
+                        ]),
                         world,
                     ]
                 }.items(),
@@ -156,29 +207,8 @@ def generate_launch_description():
                 ],
             ),
             TimerAction(
-                period=1.0,
-                actions=[
-                    Node(
-                        package="ros_gz_sim",
-                        executable="create",
-                        name="spawn_asv_kki_2026",
-                        output="screen",
-                        arguments=[
-                            "-name",
-                            "asv_kki_2026",
-                            "-file",
-                            model_sdf,
-                            "-x",
-                            spawn_x,
-                            "-y",
-                            spawn_y,
-                            "-z",
-                            spawn_z,
-                            "-Y",
-                            spawn_yaw,
-                        ],
-                    )
-                ],
+                period=25.0,
+                actions=[planar_pose_controller],
             ),
             Node(
                 condition=IfCondition(use_mux),
@@ -200,28 +230,6 @@ def generate_launch_description():
                 name="cmd_vel_to_thrusters",
                 output="screen",
                 parameters=[{"use_sim_time": use_sim_time}],
-            ),
-            TimerAction(
-                period=2.0,
-                actions=[
-                    Node(
-                        package="asv_control",
-                        executable="planar_pose_controller",
-                        name="planar_pose_controller",
-                        output="screen",
-                        parameters=[
-                            {
-                                "world_name": world_name,
-                                "spawn_x": spawn_x,
-                                "spawn_y": spawn_y,
-                                "surface_z": spawn_z,
-                                "spawn_yaw": spawn_yaw,
-                                "pose_rate_hz": 10.0,
-                                "minimum_visual_z": 0.09,
-                            }
-                        ],
-                    )
-                ],
             ),
         ]
     )

@@ -1,0 +1,17 @@
+# navsat_transform_node: GPS Fix → ENU odometry
+# Converts /asv/gps/fix → /odometry/gps for ekf_map to consume.
+navsat_transform_node:
+  ros__parameters:
+    frequency: 10.0
+    delay: 0.0
+    magnetic_declination_radians: 0.0
+    # KKI field GPS datum: lat=1.47, lon=102.11
+    # yaw_offset = 0 means ENU X axis points East
+    yaw_offset: 0.0
+    zero_altitude: true
+    broadcast_utm_transform: false
+    broadcast_utm_transform_as_parent_frame: false
+    publish_filtered_gps: false
+    use_odometry_yaw: false
+    wait_for_datum: true
+    datum: [1.470000, 102.110000, 0.0]

@@ -58,9 +58,13 @@ class GpsWaypointFollower(Node):
         self.declare_parameter("heading_kp", 0.95)
         self.declare_parameter("heading_kd", 0.18)
         self.declare_parameter("max_yaw_rate_radps", 0.58)
-        self.declare_parameter("obstacle_stop_distance_m", 0.38)
+        # Gazebo LiDAR has a 0.45 m minimum range, so the reverse threshold must
+        # stay above that value or the stop/reverse branch can never trigger.
+        self.declare_parameter("obstacle_stop_distance_m", 0.65)
         self.declare_parameter("obstacle_slow_distance_m", 0.85)
         self.declare_parameter("lidar_self_filter_distance_m", 0.45)
+        self.declare_parameter("reverse_speed_mps", 0.22)
+        self.declare_parameter("reverse_yaw_rate_radps", 0.45)
         self.declare_parameter("front_scan_half_angle_deg", 8.0)
         self.declare_parameter("side_scan_min_angle_deg", 35.0)
         self.declare_parameter("side_scan_max_angle_deg", 105.0)
@@ -82,6 +86,9 @@ class GpsWaypointFollower(Node):
         self.declare_parameter("lidar_process_every_n_scans", 3)
         self.declare_parameter("lidar_sample_stride", 3)
         self.declare_parameter("lidar_detection_max_distance_m", 1.80)
+        # Docking: LiDAR-guided contact detection
+        self.declare_parameter("dock_contact_distance_m", 0.40)
+        self.declare_parameter("dock_slow_distance_m", 1.20)
 
         self.waypoints, self.origin_lat, self.origin_lon = self.load_waypoints(
             Path(str(self.get_parameter("waypoint_file").value))
@@ -143,6 +150,7 @@ class GpsWaypointFollower(Node):
                     "x": x,
                     "y": y,
                     "speed": float(item.get("speed", data.get("default_speed_mps", 0.8))),
+                    "docking": bool(item.get("docking", False)),
                 }
             )
         if not waypoints:
@@ -167,6 +175,12 @@ class GpsWaypointFollower(Node):
             ),
             "lidar_self_filter_distance_m": float(
                 self.get_parameter("lidar_self_filter_distance_m").value
+            ),
+            "reverse_speed_mps": float(
+                self.get_parameter("reverse_speed_mps").value
+            ),
+            "reverse_yaw_rate_radps": float(
+                self.get_parameter("reverse_yaw_rate_radps").value
             ),
             "front_scan_half_angle_deg": float(
                 self.get_parameter("front_scan_half_angle_deg").value
@@ -232,6 +246,14 @@ class GpsWaypointFollower(Node):
         self.stop_distance = max(0.05, values["obstacle_stop_distance_m"])
         self.slow_distance = max(self.stop_distance, values["obstacle_slow_distance_m"])
         self.lidar_self_filter = max(0.0, values["lidar_self_filter_distance_m"])
+        self.reverse_speed = min(
+            max(0.0, values["reverse_speed_mps"]),
+            max(self.max_speed, 0.01),
+        )
+        self.reverse_yaw_rate = min(
+            max(0.0, values["reverse_yaw_rate_radps"]),
+            self.max_yaw_rate,
+        )
         self.front_scan_half_angle = math.radians(
             max(1.0, values["front_scan_half_angle_deg"])
         )
@@ -352,6 +374,23 @@ class GpsWaypointFollower(Node):
             self.publish_zero("mission_complete")
             return
 
+        # Per-waypoint LiDAR disable (legacy) OR docking mode:
+        # In docking mode, LiDAR is used to DETECT and approach buoys.
+        current_wp = self.waypoints[self.current_index]
+        wp_lidar_disabled = bool(current_wp.get("lidar_disabled", False))
+        wp_docking = bool(current_wp.get("docking", False))
+        if wp_lidar_disabled and not wp_docking:
+            # Legacy: fully disable LiDAR
+            self.lidar_enabled = False
+            self.front_obstacle = math.inf
+            self.left_obstacle = math.inf
+            self.right_obstacle = math.inf
+        else:
+            self.lidar_enabled = True
+
+        dock_contact_dist = float(self.get_parameter("dock_contact_distance_m").value)
+        dock_slow_dist = float(self.get_parameter("dock_slow_distance_m").value)
+
         guidance = self.compute_guidance(x, y)
         target = guidance["target"]
         distance = guidance["distance"]
@@ -383,11 +422,42 @@ class GpsWaypointFollower(Node):
         )
 
         avoid_note = "clear"
-        if self.front_obstacle < self.stop_distance:
-            speed = 0.0
-            yaw_rate = -0.55 if self.left_obstacle < self.right_obstacle else 0.55
+        if wp_docking:
+            # ── DOCKING MODE ─────────────────────────────────────────────────
+            # LiDAR is ACTIVE and used to DETECT buoys as proximity sensor.
+            # Approach the buoy target slowly; stop at contact instead of reversing.
+            nearest = min(self.front_obstacle, self.right_obstacle)
+
+            if nearest <= dock_contact_dist:
+                # LiDAR confirmed contact with buoy → stop and advance waypoint
+                speed = 0.0
+                yaw_rate = 0.0
+                avoid_note = f"dock_contact_lidar={nearest:.2f}m"
+                self.get_logger().info(
+                    f"[DOCKING] Contact detected by LiDAR at {nearest:.2f}m – "
+                    f"waypoint '{current_wp['name']}' complete"
+                )
+                # Manually advance past this docking waypoint
+                self.current_index += 1
+                self.last_heading_error = 0.0
+            elif nearest <= dock_slow_dist:
+                # LiDAR sees buoy nearby – slow down proportionally, do NOT steer away
+                scale = max(0.15, nearest / dock_slow_dist)
+                speed = max(0.08, speed * scale)
+                avoid_note = f"dock_approach_lidar={nearest:.2f}m"
+            else:
+                avoid_note = f"dock_seek_lidar={nearest:.2f}m"
+            # Clamp yaw to prevent spinning
             yaw_rate = max(-self.max_yaw_rate, min(self.max_yaw_rate, yaw_rate))
-            avoid_note = "stop_turn"
+        elif self.front_obstacle < self.stop_distance:
+            speed = -self.reverse_speed
+            yaw_rate = (
+                -self.reverse_yaw_rate
+                if self.left_obstacle < self.right_obstacle
+                else self.reverse_yaw_rate
+            )
+            yaw_rate = max(-self.max_yaw_rate, min(self.max_yaw_rate, yaw_rate))
+            avoid_note = "reverse_turn"
         elif self.front_obstacle < self.slow_distance:
             scale = max(0.25, self.front_obstacle / self.slow_distance)
             speed = max(self.min_speed, speed * scale)
@@ -417,7 +487,9 @@ class GpsWaypointFollower(Node):
                     f"cte={guidance['cross_track_error']:.2f} "
                     f"heading_error={heading_error:.2f} "
                     f"cmd_v={cmd.linear.x:.2f} cmd_w={cmd.angular.z:.2f} "
-                    f"front_lidar={self.front_obstacle:.2f} avoid={avoid_note} "
+                    f"front_lidar={self.front_obstacle:.2f} "
+                    f"right_lidar={self.right_obstacle:.2f} "
+                    f"avoid={avoid_note} "
                     f"reached={','.join(reached) if reached else '-'}"
                 )
             )

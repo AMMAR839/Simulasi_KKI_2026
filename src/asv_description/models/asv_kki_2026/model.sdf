@@ -216,7 +216,7 @@
 
     <link name="left_thruster_servo_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="left_thruster_steering_joint">0 0 0 0 0 0</pose>
       <visual name="left_thruster_housing_visual">
         <geometry>
@@ -336,7 +336,7 @@
 
     <link name="right_thruster_servo_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="right_thruster_steering_joint">0 0 0 0 0 0</pose>
       <visual name="right_thruster_housing_visual">
         <geometry>
@@ -456,7 +456,7 @@
 
     <link name="left_propeller_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="left_propeller_joint">0 0 0 0 0 0</pose>
       <visual name="left_propeller_mesh_visual">
         <pose>0 0 0 0 0 0</pose>
@@ -520,7 +520,7 @@
 
     <link name="right_propeller_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="right_propeller_joint">0 0 0 0 0 0</pose>
       <visual name="right_propeller_mesh_visual">
         <pose>0 0 0 0 0 0</pose>
@@ -584,7 +584,7 @@
 
     <link name="imu_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="base_link">0.000 0 0.220 0 0 0</pose>
       <inertial>
         <mass>0.02</mass>
@@ -610,7 +610,7 @@
 
     <link name="gps_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="base_link">0.020 0 0.530 0 0 0</pose>
       <inertial>
         <mass>0.05</mass>
@@ -632,13 +632,13 @@
             <horizontal>
               <noise type="gaussian">
                 <mean>0</mean>
-                <stddev>0.6</stddev>
+                <stddev>0.05</stddev>
               </noise>
             </horizontal>
             <vertical>
               <noise type="gaussian">
                 <mean>0</mean>
-                <stddev>1.0</stddev>
+                <stddev>0.10</stddev>
               </noise>
             </vertical>
           </position_sensing>
@@ -652,8 +652,8 @@
 
     <link name="lidar_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
-      <pose relative_to="base_link">0.036 0 0.520 0 0 0</pose>
+      <kinematic>false</kinematic>
+      <pose relative_to="base_link">0.036 0 0.150 0 0 0</pose>
       <inertial>
         <mass>0.12</mass>
         <inertia>
@@ -741,7 +741,7 @@
 
     <link name="front_camera_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
+      <kinematic>false</kinematic>
       <pose relative_to="base_link">0.430 0 0.400 0 0.100 0</pose>
       <inertial>
         <mass>0.08</mass>
@@ -817,8 +817,8 @@
 
     <link name="down_camera_link">
       <gravity>false</gravity>
-      <kinematic>true</kinematic>
-      <pose relative_to="base_link">0.120 0 0.110 0 1.570796 0</pose>
+      <kinematic>false</kinematic>
+      <pose relative_to="base_link">0.350 -0.380 -0.050 0 0 1.570796</pose>
       <inertial>
         <mass>0.05</mass>
         <inertia>
@@ -872,7 +872,7 @@
         <always_on>true</always_on>
         <update_rate>10</update_rate>
         <camera>
-          <horizontal_fov>1.0471976</horizontal_fov>
+          <horizontal_fov>1.85</horizontal_fov>
           <image>
             <width>640</width>
             <height>480</height>

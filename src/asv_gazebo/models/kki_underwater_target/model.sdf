@@ -8,10 +8,10 @@
     <link name="base_link">
       <visual name="blue_box_above_water">
         <cast_shadows>true</cast_shadows>
-        <pose>0 0 0.150 0 0 0</pose>
+        <pose>0 0 0.300 0 0 0</pose>
         <geometry>
           <box>
-            <size>0.60 0.60 0.30</size>
+            <size>0.60 0.60 0.60</size>
           </box>
         </geometry>
         <material>
@@ -66,11 +66,11 @@
         <material><ambient>0.02 0.08 0.08 1</ambient><diffuse>0.02 0.08 0.08 1</diffuse></material>
       </visual>
       <collision name="collision">
-        <!-- Full inverted surveillance box collision: 60 x 60 x 90 cm. -->
-        <pose>0 0 -0.150 0 0 0</pose>
+        <!-- Full inverted surveillance box collision: 60 x 60 x 120 cm. -->
+        <pose>0 0 0.000 0 0 0</pose>
         <geometry>
           <box>
-            <size>0.60 0.60 0.90</size>
+            <size>0.60 0.60 1.20</size>
           </box>
         </geometry>
       </collision>

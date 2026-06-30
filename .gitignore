@@ -4,4 +4,7 @@ log/
 *.pyc
 __pycache__/
 .colcon/
+mission_captures/
+task.md
+walkthrough.md
 

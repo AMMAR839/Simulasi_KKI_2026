@@ -1,0 +1,54 @@
+# EKF node — MAP frame (map → odom)
+# Fuses GPS (via navsat_transform) + IMU for global localization.
+# GPS input comes from navsat_transform_node as odometry/gps topic.
+ekf_filter_node_map:
+  ros__parameters:
+    frequency: 10.0
+    sensor_timeout: 1.0
+    two_d_mode: true
+    publish_tf: true
+
+    # TF frames
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: map           # Publishes map → odom TF
+
+    # GPS-derived odometry from navsat_transform_node
+    odom0: /odometry/gps
+    odom0_config: [true,  true,  false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 5
+
+    # IMU — heading only for global orientation
+    imu0: /asv/imu/data
+    imu0_config: [false, false, false,
+                  false, false, true,
+                  false, false, false,
+                  false, false, false,
+                  false, false, false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_remove_gravitational_acceleration: true
+    imu0_queue_size: 10
+
+    process_noise_covariance: [1.0,  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    1.0,  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    1e-3, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    1e-3, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    1e-3, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.1,  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.5,  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.5,  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-3, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.1,  0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.1,  0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.1,  0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-3, 0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-3, 0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-3]

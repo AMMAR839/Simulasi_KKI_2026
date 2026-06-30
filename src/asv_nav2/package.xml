@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>asv_nav2</name>
+  <version>0.1.0</version>
+  <description>Nav2 full-stack configuration for ASV KKI 2026 — GPS navigation, collision monitor, docking, and behavior trees.</description>
+  <maintainer email="ammar@example.com">ammar</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <!-- Robot localization (GPS EKF) -->
+  <exec_depend>robot_localization</exec_depend>
+
+  <!-- Nav2 core stack -->
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_bt_navigator</exec_depend>
+  <exec_depend>nav2_controller</exec_depend>
+  <exec_depend>nav2_planner</exec_depend>
+  <exec_depend>nav2_behaviors</exec_depend>
+  <exec_depend>nav2_waypoint_follower</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_costmap_2d</exec_depend>
+  <exec_depend>nav2_smoother</exec_depend>
+  <exec_depend>nav2_velocity_smoother</exec_depend>
+
+  <!-- Nav2 controllers -->
+  <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
+  <exec_depend>nav2_navfn_planner</exec_depend>
+  <exec_depend>nav2_smac_planner</exec_depend>
+
+  <!-- Collision monitor -->
+  <exec_depend>nav2_collision_monitor</exec_depend>
+
+  <!-- Docking -->
+  <exec_depend>opennav_docking</exec_depend>
+  <exec_depend>opennav_docking_bt</exec_depend>
+
+  <!-- Simple commander API -->
+  <exec_depend>nav2_simple_commander</exec_depend>
+
+  <!-- Messages -->
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
