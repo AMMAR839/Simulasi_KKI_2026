@@ -1,25 +1,7 @@
-"""
-full_system_nav2_lintasan_a.launch.py — Full Nav2 System for KKI 2026 Course A
-================================================================================
-Menggantikan full_system_lintasan_a.launch.py dengan Nav2 full-stack.
-
-Perbedaan dari versi lama:
-  - Menggunakan navigation_nav2.launch.py (Nav2) bukan navigation.launch.py (custom)
-  - Nav2 BT navigator menangani path planning + recovery
-  - Nav2 Collision Monitor (polygon zones) menggantikan custom collision_monitor.py
-  - OpenNav Docking Server untuk docking ke buoy biru
-  - robot_localization dual-EKF untuk GPS + IMU fusion
-
-Cara menjalankan:
-  ros2 launch asv_bringup full_system_nav2_lintasan_a.launch.py
-  ros2 launch asv_bringup full_system_nav2_lintasan_a.launch.py headless:=true
-"""
+"""Full Nav2, perception, and two-lap mission for KKI 2026 course B."""
 
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    IncludeLaunchDescription,
-)
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
@@ -29,7 +11,6 @@ def generate_launch_description():
     headless = LaunchConfiguration("headless")
     show_lidar_visual = LaunchConfiguration("show_lidar_visual")
     auto_mode = LaunchConfiguration("auto_mode")
-    use_joystick = LaunchConfiguration("use_joystick")
     use_navsat = LaunchConfiguration("use_navsat")
     enable_lidar_pointcloud = LaunchConfiguration("enable_lidar_pointcloud")
     nav2_start_delay = LaunchConfiguration("nav2_start_delay_s")
@@ -37,41 +18,13 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            # ── Launch Arguments ──────────────────────────────
-            DeclareLaunchArgument(
-                "headless",
-                default_value="false",
-                description="Run Gazebo without GUI.",
-            ),
-            DeclareLaunchArgument(
-                "show_lidar_visual",
-                default_value="false",
-                description="Show Gazebo LiDAR rays.",
-            ),
-            DeclareLaunchArgument(
-                "auto_mode",
-                default_value="true",
-                description="Start in autonomous mode.",
-            ),
-            DeclareLaunchArgument(
-                "use_joystick",
-                default_value="false",
-                description="Also start joystick nodes.",
-            ),
-            DeclareLaunchArgument(
-                "use_navsat",
-                default_value="false",
-                description="Use GPS/NavSat global EKF instead of local simulator map frame.",
-            ),
-            DeclareLaunchArgument(
-                "enable_lidar_pointcloud",
-                default_value="false",
-                description="Enable simulator PointCloud2 bridge for VoxelLayer validation.",
-            ),
+            DeclareLaunchArgument("headless", default_value="false"),
+            DeclareLaunchArgument("show_lidar_visual", default_value="false"),
+            DeclareLaunchArgument("auto_mode", default_value="true"),
+            DeclareLaunchArgument("use_navsat", default_value="false"),
+            DeclareLaunchArgument("enable_lidar_pointcloud", default_value="false"),
             DeclareLaunchArgument("nav2_start_delay_s", default_value="35.0"),
             DeclareLaunchArgument("mission_start_delay_s", default_value="50.0"),
-
-            # ── Include sim.launch.py (Gazebo + robot spawn) ──
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
@@ -83,14 +36,14 @@ def generate_launch_description():
                         [
                             FindPackageShare("asv_gazebo"),
                             "worlds",
-                            "kki_2026_lintasan_a.sdf",
+                            "kki_2026_lintasan_b.sdf",
                         ]
                     ),
-                    "spawn_x": "10.8",
+                    "spawn_x": "-10.8",
                     "spawn_y": "-8.7",
                     "spawn_z": "0.02",
-                    "spawn_yaw": "1.2405",
-                    "world_name": "kki_2026_lintasan_a",
+                    "spawn_yaw": "1.9011",
+                    "world_name": "kki_2026_lintasan_b",
                     "auto_mode": auto_mode,
                     "use_mux": "true",
                     "mux_auto_topic": "/cmd_vel_auto",
@@ -99,8 +52,6 @@ def generate_launch_description():
                     "headless": headless,
                 }.items(),
             ),
-
-            # ── Include sensors.launch.py (bridge, camera, lidar) ──
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
@@ -111,8 +62,6 @@ def generate_launch_description():
                     "enable_lidar_pointcloud": enable_lidar_pointcloud,
                 }.items(),
             ),
-
-            # ── Include navigation_nav2.launch.py (Nav2 full stack) ──
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
@@ -128,10 +77,10 @@ def generate_launch_description():
                         [
                             FindPackageShare("asv_navigation"),
                             "config",
-                            "kki_waypoints_a.yaml",
+                            "kki_waypoints_b.yaml",
                         ]
                     ),
-                    "course": "a",
+                    "course": "b",
                     "use_sim_time": "true",
                     "nav2_start_delay_s": nav2_start_delay,
                     "mission_start_delay_s": mission_start_delay,

@@ -43,7 +43,12 @@ docking_server:
       v_linear_max: 0.18
       v_angular_max: 0.45
       transform_tolerance: 0.5
-      dock_collision_threshold: 0.25
+      # Docking buoys are intentional contact targets and therefore occupied
+      # in the Nav2 costmap. The external Collision Monitor remains active.
+      use_collision_detection: false
+      # Retain the correct intentional-contact threshold if the internal
+      # checker is enabled for a different dock implementation.
+      dock_collision_threshold: 1.0
 
     # ── Dock database ──────────────────────────────────────
     docks: ["kki_buoy_dock_a", "kki_buoy_dock_b"]

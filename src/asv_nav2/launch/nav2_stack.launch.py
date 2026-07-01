@@ -40,11 +40,7 @@ def generate_launch_description():
         [nav2_share, "config", "docking_params.yaml"]
     )
     default_nav_to_pose_bt_xml = PathJoinSubstitution(
-        [
-            nav2_bt_share,
-            "behavior_trees",
-            "navigate_to_pose_w_replanning_and_recovery.xml",
-        ]
+        [nav2_share, "behavior_trees", "kki_navigate_to_pose_bt.xml"]
     )
     default_nav_through_poses_bt_xml = PathJoinSubstitution(
         [
@@ -52,6 +48,9 @@ def generate_launch_description():
             "behavior_trees",
             "navigate_through_poses_w_replanning_and_recovery.xml",
         ]
+    )
+    mission_bt_xml = PathJoinSubstitution(
+        [nav2_share, "behavior_trees", "kki_mission_bt.xml"]
     )
 
     return LaunchDescription(
@@ -175,12 +174,12 @@ def generate_launch_description():
                                 "use_sim_time": use_sim_time,
                                 "use_bond": False,
                                 "default_nav_to_pose_bt_xml": default_nav_to_pose_bt_xml,
-                                "default_nav_through_poses_bt_xml": default_nav_through_poses_bt_xml,
+                                "default_nav_through_poses_bt_xml": mission_bt_xml,
                             },
                         ],
                     ),
 
-                    # ── Planner Server (NavFn Dijkstra) ───────
+                    # ── Planner Server (Smac Hybrid-A*) ───────
                     Node(
                         package="nav2_planner",
                         executable="planner_server",
@@ -213,7 +212,7 @@ def generate_launch_description():
                         ],
                         remappings=[
                             ("odom", "/odometry/local"),
-                            ("cmd_vel", "/cmd_vel"),
+                            ("cmd_vel", "/cmd_vel_nav"),
                         ],
                     ),
 
@@ -247,7 +246,7 @@ def generate_launch_description():
                         ],
                         remappings=[
                             ("odom", "/odometry/local"),
-                            ("cmd_vel", "/cmd_vel"),
+                            ("cmd_vel", "/cmd_vel_nav"),
                         ],
                     ),
 
@@ -263,6 +262,43 @@ def generate_launch_description():
                                 "use_sim_time": use_sim_time,
                                 "use_bond": False,
                             },
+                        ],
+                    ),
+
+                    Node(
+                        package="asv_control",
+                        executable="autonomy_cmd_mux",
+                        name="autonomy_cmd_mux",
+                        output="screen",
+                        parameters=[{"use_sim_time": use_sim_time}],
+                    ),
+
+                    Node(
+                        package="nav2_velocity_smoother",
+                        executable="velocity_smoother",
+                        name="velocity_smoother",
+                        output="screen",
+                        parameters=[
+                            nav2_params_file,
+                            {"use_sim_time": use_sim_time, "use_bond": False},
+                        ],
+                        remappings=[
+                            ("cmd_vel", "/cmd_vel_auto_raw"),
+                            ("cmd_vel_smoothed", "/cmd_vel_auto"),
+                            ("odom", "/odometry/local"),
+                        ],
+                    ),
+
+                    Node(
+                        package="nav2_collision_monitor",
+                        executable="collision_monitor",
+                        name="nav2_collision_monitor",
+                        output="screen",
+                        parameters=[
+                            PathJoinSubstitution(
+                                [nav2_share, "config", "collision_monitor_params.yaml"]
+                            ),
+                            {"use_sim_time": use_sim_time, "use_bond": False},
                         ],
                     ),
 
@@ -284,6 +320,8 @@ def generate_launch_description():
                                     "behavior_server",
                                     "bt_navigator",
                                     "waypoint_follower",
+                                    "velocity_smoother",
+                                    "nav2_collision_monitor",
                                 ],
                             }
                         ],
@@ -304,24 +342,29 @@ def generate_launch_description():
                         ],
                         remappings=[
                             ("odom", "/odometry/local"),
-                            ("cmd_vel", "/cmd_vel"),
+                            ("cmd_vel", "/cmd_vel_dock"),
                             ("scan", "/asv/lidar/scan"),
                         ],
                     ),
 
                     # ── Lifecycle Manager for Docking ─────────
-                    Node(
-                        package="nav2_lifecycle_manager",
-                        executable="lifecycle_manager",
-                        name="lifecycle_manager_docking",
-                        output="screen",
-                        parameters=[
-                            {
-                                "use_sim_time": use_sim_time,
-                                "autostart": autostart,
-                                "bond_timeout": 4.0,
-                                "node_names": ["docking_server"],
-                            }
+                    TimerAction(
+                        period=2.0,
+                        actions=[
+                            Node(
+                                package="nav2_lifecycle_manager",
+                                executable="lifecycle_manager",
+                                name="lifecycle_manager_docking",
+                                output="screen",
+                                parameters=[
+                                    {
+                                        "use_sim_time": use_sim_time,
+                                        "autostart": autostart,
+                                        "bond_timeout": 15.0,
+                                        "node_names": ["docking_server"],
+                                    }
+                                ],
+                            )
                         ],
                     ),
                 ],

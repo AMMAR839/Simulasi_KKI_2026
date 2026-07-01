@@ -87,6 +87,37 @@ def generate_launch_description():
                 }.items(),
             ),
 
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution(
+                        [
+                            FindPackageShare("asv_perception"),
+                            "launch",
+                            "perception.launch.py",
+                        ]
+                    )
+                ),
+                launch_arguments={
+                    "course": course,
+                    "lidar_max_range_m": "6.0",
+                    "use_sim_time": use_sim_time,
+                    "waypoint_file": waypoint_file,
+                }.items(),
+            ),
+
+            Node(
+                package="asv_navigation",
+                executable="mission_metrics_logger",
+                name="mission_metrics_logger",
+                output="screen",
+                parameters=[
+                    {
+                        "use_sim_time": use_sim_time,
+                        "course": course,
+                    }
+                ],
+            ),
+
             # ── Mission Supervisor Nav2 ───────────────────────
             # Starts after Nav2 is fully up
             TimerAction(

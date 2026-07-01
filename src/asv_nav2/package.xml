@@ -38,6 +38,7 @@
 
   <!-- Simple commander API -->
   <exec_depend>nav2_simple_commander</exec_depend>
+  <exec_depend>asv_control</exec_depend>
 
   <!-- Messages -->
   <exec_depend>geometry_msgs</exec_depend>

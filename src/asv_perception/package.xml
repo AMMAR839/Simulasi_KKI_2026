@@ -1,20 +1,29 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>asv_control</name>
+  <name>asv_perception</name>
   <version>0.1.0</version>
-  <description>Manual joystick, command mux, and thruster command nodes for ASV simulation.</description>
+  <description>Lightweight HSV perception and persistent survey mapping for ASV KKI 2026.</description>
   <maintainer email="ammar@example.com">ammar</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>cv_bridge</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
-  <exec_depend>rcl_interfaces</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>vision_msgs</exec_depend>
+
+  <test_depend>ament_pytest</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

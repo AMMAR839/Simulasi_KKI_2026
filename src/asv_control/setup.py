@@ -41,6 +41,7 @@ setup(
         "console_scripts": [
             "cmd_vel_to_thrusters = asv_control.cmd_vel_to_thrusters:main",
             "manual_autonomy_mux = asv_control.manual_autonomy_mux:main",
+            "autonomy_cmd_mux = asv_control.autonomy_cmd_mux:main",
             "joystick_mode_manager = asv_control.joystick_mode_manager:main",
             "simple_joystick_teleop = asv_control.simple_joystick_teleop:main",
             "planar_pose_controller = asv_control.planar_pose_controller:main",

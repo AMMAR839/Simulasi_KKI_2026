@@ -1,0 +1,56 @@
+<!-- KKI NavigateToPose tree used by the segment-based mission supervisor. -->
+<root BTCPP_format="4" main_tree_to_execute="KkiNavigateToPose">
+  <BehaviorTree ID="KkiNavigateToPose">
+    <RecoveryNode number_of_retries="6" name="NavigateToSinglePoseRecovery">
+      <PipelineSequence name="NavigateWithSmoothedReplanning">
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="PlanAndSmoothRecovery">
+            <Sequence name="PlanAndSmooth">
+              <ComputePathToPose error_code_id="{compute_path_error_code}"
+                                 goal="{goal}"
+                                 path="{path}"
+                                 planner_id="GridBased" />
+              <SmoothPath unsmoothed_path="{path}"
+                          smoothed_path="{path}"
+                          max_smoothing_duration="1.0"
+                          smoother_id="simple_smoother"
+                          check_for_collisions="false"
+                          error_code_id="{smoother_error_code}" />
+            </Sequence>
+            <ReactiveFallback name="PlanAndSmoothFallback">
+              <GoalUpdated />
+              <ClearEntireCostmap name="ClearGlobalCostmap"
+                                  service_name="/global_costmap/clear_entirely_global_costmap" />
+            </ReactiveFallback>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPathRecovery">
+          <FollowPath error_code_id="{follow_path_error_code}"
+                      path="{path}"
+                      controller_id="FollowPath" />
+          <ReactiveFallback name="FollowPathFallback">
+            <GoalUpdated />
+            <ClearEntireCostmap name="ClearLocalCostmap"
+                                service_name="/local_costmap/clear_entirely_local_costmap" />
+          </ReactiveFallback>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated />
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmapRecovery"
+                                service_name="/local_costmap/clear_entirely_local_costmap" />
+            <ClearEntireCostmap name="ClearGlobalCostmapRecovery"
+                                service_name="/global_costmap/clear_entirely_global_costmap" />
+          </Sequence>
+          <Spin spin_dist="1.20" error_code_id="{spin_error_code}" />
+          <Wait wait_duration="2.0" />
+          <BackUp backup_dist="0.40"
+                  backup_speed="0.12"
+                  error_code_id="{backup_error_code}" />
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

@@ -11,12 +11,12 @@
   The actual mission sequencing (photo → dock) is done in Python
   via nav2_simple_commander in mission_supervisor_nav2.py.
 -->
-<root BTCPP_format="4" main_tree_to_execute="NavigateThroughPoses">
+<root BTCPP_format="4" main_tree_to_execute="KkiNavigateThroughPoses">
 
   <!--==========================================================-->
   <!-- Navigate Through Poses with replanning and recovery       -->
   <!--==========================================================-->
-  <BehaviorTree ID="NavigateThroughPoses">
+  <BehaviorTree ID="KkiNavigateThroughPoses">
     <RecoveryNode number_of_retries="6" name="NavigateThroughPosesRecovery">
       <PipelineSequence name="NavigateWithReplanning">
         <RateController hz="1.0">
@@ -63,7 +63,7 @@
   <!--==========================================================-->
   <!-- Navigate To Pose (single target) with recovery            -->
   <!--==========================================================-->
-  <BehaviorTree ID="NavigateToPose">
+  <BehaviorTree ID="KkiNavigateToPose">
     <RecoveryNode number_of_retries="6" name="NavigateToSinglePoseRecovery">
       <PipelineSequence name="NavigateWithReplanning">
         <RateController hz="1.0">

@@ -715,15 +715,15 @@
               <max_angle>3.14159</max_angle>
             </horizontal>
             <vertical>
-              <samples>1</samples>
+              <samples>3</samples>
               <resolution>1</resolution>
-              <min_angle>0</min_angle>
-              <max_angle>0</max_angle>
+              <min_angle>-0.035</min_angle>
+              <max_angle>0.035</max_angle>
             </vertical>
           </scan>
           <range>
             <min>0.45</min>
-            <max>35.0</max>
+            <max>6.0</max>
             <resolution>0.02</resolution>
           </range>
           <noise>

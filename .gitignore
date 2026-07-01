@@ -5,6 +5,7 @@ log/
 __pycache__/
 .colcon/
 mission_captures/
+mission_maps/
+mission_metrics/
 task.md
 walkthrough.md
-

@@ -4,6 +4,7 @@ import time
 
 import rclpy
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 from rcl_interfaces.msg import SetParametersResult
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
@@ -44,17 +45,24 @@ class CmdVelToThrusters(Node):
         self.declare_parameter("max_forward_thrust_n", 48.0)
         self.declare_parameter("max_reverse_thrust_n", 28.0)
         self.declare_parameter("max_speed_cmd_mps", 0.9)
-        self.declare_parameter("yaw_to_thrust_n_per_radps", 5.0)
-        self.declare_parameter("pivot_yaw_to_thrust_n_per_radps", 12.0)
+        self.declare_parameter("yaw_to_thrust_n_per_radps", 8.0)
+        self.declare_parameter("pivot_yaw_to_thrust_n_per_radps", 18.0)
         self.declare_parameter("max_yaw_rate_cmd_radps", 0.9)
         self.declare_parameter("max_steering_angle_rad", 0.60)
-        self.declare_parameter("steering_gain", 0.85)
+        self.declare_parameter("steering_gain", 1.0)
         self.declare_parameter("min_vectoring_thrust_n", 2.5)
         self.declare_parameter("steering_sign", -1.0)
         self.declare_parameter("propeller_spin_radps_per_n", 11.0)
         self.declare_parameter("max_propeller_spin_radps", 520.0)
         self.declare_parameter("cmd_timeout_s", 0.5)
         self.declare_parameter("publish_rate_hz", 30.0)
+        self.declare_parameter("closed_loop_enabled", True)
+        self.declare_parameter("odom_topic", "/odometry/local")
+        self.declare_parameter("surge_kp_n_per_mps", 12.0)
+        self.declare_parameter("surge_ki_n_per_m", 2.0)
+        self.declare_parameter("yaw_kp_n_per_radps", 4.0)
+        self.declare_parameter("yaw_ki_n_per_rad", 0.8)
+        self.declare_parameter("integral_limit", 0.35)
 
         self.apply_parameters(self.parameter_values())
         self.add_on_set_parameters_callback(self.on_parameter_update)
@@ -77,9 +85,25 @@ class CmdVelToThrusters(Node):
 
         cmd_topic = self.get_parameter("cmd_vel_topic").value
         self.create_subscription(Twist, cmd_topic, self.on_cmd_vel, 10)
+        self.create_subscription(
+            Odometry,
+            str(self.get_parameter("odom_topic").value),
+            self.on_odom,
+            10,
+        )
+        self.create_subscription(
+            Float64, "/asv/control/adaptive_trim", self.on_adaptive_trim, 10
+        )
 
         self.last_cmd = Twist()
         self.last_cmd_time = 0.0
+        self.measured_speed = 0.0
+        self.measured_yaw_rate = 0.0
+        self.last_feedback_time = 0.0
+        self.surge_integral = 0.0
+        self.yaw_integral = 0.0
+        self.adaptive_trim = 0.0
+        self.last_control_time = time.monotonic()
         self.last_nonzero_log = 0.0
         rate = float(self.get_parameter("publish_rate_hz").value)
         self.create_timer(1.0 / max(rate, 1.0), self.on_timer)
@@ -117,6 +141,24 @@ class CmdVelToThrusters(Node):
                 self.get_parameter("max_propeller_spin_radps").value
             ),
             "cmd_timeout_s": float(self.get_parameter("cmd_timeout_s").value),
+            "closed_loop_enabled": bool(
+                self.get_parameter("closed_loop_enabled").value
+            ),
+            "surge_kp_n_per_mps": float(
+                self.get_parameter("surge_kp_n_per_mps").value
+            ),
+            "surge_ki_n_per_m": float(
+                self.get_parameter("surge_ki_n_per_m").value
+            ),
+            "yaw_kp_n_per_radps": float(
+                self.get_parameter("yaw_kp_n_per_radps").value
+            ),
+            "yaw_ki_n_per_rad": float(
+                self.get_parameter("yaw_ki_n_per_rad").value
+            ),
+            "integral_limit": float(
+                self.get_parameter("integral_limit").value
+            ),
         }
 
     def apply_parameters(self, values):
@@ -133,6 +175,12 @@ class CmdVelToThrusters(Node):
         self.spin_scale = max(0.0, values["propeller_spin_radps_per_n"])
         self.max_spin = max(1.0, values["max_propeller_spin_radps"])
         self.timeout = max(0.05, values["cmd_timeout_s"])
+        self.closed_loop = bool(values["closed_loop_enabled"])
+        self.surge_kp = max(0.0, values["surge_kp_n_per_mps"])
+        self.surge_ki = max(0.0, values["surge_ki_n_per_m"])
+        self.yaw_kp = max(0.0, values["yaw_kp_n_per_radps"])
+        self.yaw_ki = max(0.0, values["yaw_ki_n_per_rad"])
+        self.integral_limit = max(0.0, values["integral_limit"])
 
     def on_parameter_update(self, parameters):
         values = self.parameter_values()
@@ -157,15 +205,30 @@ class CmdVelToThrusters(Node):
                 )
                 self.last_nonzero_log = now
 
+    def on_odom(self, msg: Odometry):
+        self.measured_speed = float(msg.twist.twist.linear.x)
+        self.measured_yaw_rate = float(msg.twist.twist.angular.z)
+        self.last_feedback_time = time.monotonic()
+
+    def on_adaptive_trim(self, msg: Float64):
+        if math.isfinite(msg.data):
+            self.adaptive_trim = max(-0.10, min(0.10, float(msg.data)))
+
     def on_timer(self):
-        if time.monotonic() - self.last_cmd_time > self.timeout:
+        now = time.monotonic()
+        dt = max(0.0, min(0.1, now - self.last_control_time))
+        self.last_control_time = now
+        if now - self.last_cmd_time > self.timeout:
             left = 0.0
             right = 0.0
             steer = 0.0
             state = "timeout_stop"
+            self.surge_integral = 0.0
+            self.yaw_integral = 0.0
         else:
-            left, right, steer = self._mix_command(self.last_cmd)
-            state = "active"
+            left, right, steer = self._mix_command(self.last_cmd, dt)
+            feedback_fresh = now - self.last_feedback_time <= 0.5
+            state = "closed_loop" if self.closed_loop and feedback_fresh else "open_loop"
 
         self.left_pub.publish(Float64(data=left))
         self.right_pub.publish(Float64(data=right))
@@ -185,12 +248,33 @@ class CmdVelToThrusters(Node):
             )
         )
 
-    def _mix_command(self, cmd: Twist) -> tuple[float, float, float]:
+    def _mix_command(self, cmd: Twist, dt: float = 0.0) -> tuple[float, float, float]:
         throttle = self._scale_throttle(float(cmd.linear.x))
         yaw_cmd = float(cmd.angular.z)
         if not math.isfinite(yaw_cmd):
             yaw_cmd = 0.0
         yaw_cmd = max(-self.max_yaw_rate, min(self.max_yaw_rate, yaw_cmd))
+
+        feedback_fresh = time.monotonic() - self.last_feedback_time <= 0.5
+        if self.closed_loop and feedback_fresh:
+            surge_error = float(cmd.linear.x) - self.measured_speed
+            yaw_error = yaw_cmd - self.measured_yaw_rate
+            self.surge_integral = max(
+                -self.integral_limit,
+                min(self.integral_limit, self.surge_integral + surge_error * dt),
+            )
+            self.yaw_integral = max(
+                -self.integral_limit,
+                min(self.integral_limit, self.yaw_integral + yaw_error * dt),
+            )
+            throttle += (
+                self.surge_kp * surge_error
+                + self.surge_ki * self.surge_integral
+            )
+            yaw_cmd += (
+                self.yaw_kp * yaw_error + self.yaw_ki * self.yaw_integral
+            ) / max(self.yaw_scale, 1.0)
+            yaw_cmd = max(-self.max_yaw_rate, min(self.max_yaw_rate, yaw_cmd))
 
         normalized_yaw = yaw_cmd / max(self.max_yaw_rate, 1e-6)
         steer = (
@@ -206,8 +290,8 @@ class CmdVelToThrusters(Node):
             return self._clamp(-pivot), self._clamp(pivot), 0.0
 
         turn = self.yaw_scale * yaw_cmd
-        left = self._clamp(throttle - turn)
-        right = self._clamp(throttle + turn)
+        left = self._clamp((throttle - turn) * (1.0 - self.adaptive_trim))
+        right = self._clamp((throttle + turn) * (1.0 + self.adaptive_trim))
         return left, right, steer
 
     def _scale_throttle(self, speed_cmd: float) -> float:

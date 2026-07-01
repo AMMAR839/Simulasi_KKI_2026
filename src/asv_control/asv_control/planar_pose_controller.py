@@ -84,7 +84,7 @@ class PlanarPoseController(Node):
         self.declare_parameter("linear_drag_n_per_mps", 6.5)
         self.declare_parameter("lateral_drag_n_per_mps", 12.0)
         self.declare_parameter("yaw_drag_nm_per_radps", 1.7)
-        self.declare_parameter("max_linear_speed_mps", 0.45)
+        self.declare_parameter("max_linear_speed_mps", 0.50)
         self.declare_parameter("max_lateral_speed_mps", 0.12)
         self.declare_parameter("max_yaw_rate_radps", 0.65)
         self.declare_parameter("wave_effect_enabled", True)
@@ -96,7 +96,7 @@ class PlanarPoseController(Node):
         self.declare_parameter("startup_grace_s", 8.0)
         self.declare_parameter("kinematic_collision_enabled", True)
         self.declare_parameter("hull_collision_half_length_m", 0.28)
-        self.declare_parameter("hull_collision_half_width_m", 0.18)
+        self.declare_parameter("hull_collision_half_width_m", 0.31)
         self.declare_parameter("collision_margin_m", 0.01)
         self.declare_parameter("collision_rebound_factor", 0.12)
 
@@ -287,9 +287,10 @@ class PlanarPoseController(Node):
         candidate_y = self.y + (self.u * sin_yaw + self.v * cos_yaw) * dt
         candidate_yaw = normalize_angle(self.yaw + self.r * dt)
 
-        collision_name = self.first_kinematic_collision(
+        collision_names = self.kinematic_collisions(
             candidate_x, candidate_y, candidate_yaw
         )
+        collision_name = collision_names[0] if collision_names else ""
         if collision_name:
             # Check if we are moving away from the colliding object
             moving_away = False
@@ -322,7 +323,7 @@ class PlanarPoseController(Node):
                 self.v *= 0.15
                 self.r *= 0.20
                 self.last_collision_time = now
-                self.last_collision_name = collision_name
+                self.last_collision_name = ",".join(collision_names)
         else:
             self.x = candidate_x
             self.y = candidate_y
@@ -523,14 +524,19 @@ class PlanarPoseController(Node):
         return objects
 
     def first_kinematic_collision(self, x, y, yaw):
+        collisions = self.kinematic_collisions(x, y, yaw)
+        return collisions[0] if collisions else ""
+
+    def kinematic_collisions(self, x, y, yaw):
         if not self.kinematic_collision_enabled:
-            return ""
+            return []
+        collisions = []
         for obj in self.collision_objects:
             if obj["type"] == "circle" and self.circle_hits_hull(x, y, yaw, obj):
-                return obj["name"]
-            if obj["type"] == "box" and self.box_hits_hull(x, y, yaw, obj):
-                return obj["name"]
-        return ""
+                collisions.append(obj["name"])
+            elif obj["type"] == "box" and self.box_hits_hull(x, y, yaw, obj):
+                collisions.append(obj["name"])
+        return collisions
 
     def circle_hits_hull(self, x, y, yaw, obj):
         # Use an oriented hull footprint instead of one large radius. The gate

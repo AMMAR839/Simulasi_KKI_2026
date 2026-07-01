@@ -43,7 +43,8 @@ setup(
             "gps_waypoint_follower = asv_navigation.gps_waypoint_follower:main",
             "mission_supervisor = asv_navigation.mission_supervisor:main",
             # Nav2 full-stack version
-            "mission_supervisor_nav2 = asv_navigation.mission_supervisor_nav2:main",
+            "mission_supervisor_nav2 = asv_navigation.mission_supervisor_nav2_v2:main",
+            "mission_metrics_logger = asv_navigation.mission_metrics_logger:main",
         ],
     },
 )

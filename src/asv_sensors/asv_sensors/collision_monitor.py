@@ -25,7 +25,7 @@ CONTACT_TOPICS = [
 
 class CollisionMonitor(Node):
     def __init__(self):
-        super().__init__("collision_monitor")
+        super().__init__("contact_monitor")
         self.declare_parameter("contact_hold_s", 0.35)
         self.contact_hold = float(self.get_parameter("contact_hold_s").value)
         self.last_contact_time = 0.0

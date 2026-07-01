@@ -17,44 +17,43 @@ default_speed_mps: 0.75
 #   → Photo zone → Docking
 
 waypoints:
-  - {name: start_a, x: 10.80, y: -8.70, speed: 0.22}
-  # Pre-approach: naik ke utara sebelum masuk gate pertama
-  - {name: pre_gate8, x: 12.00, y: -4.00, speed: 0.30}
-  # ─── RIGHT GATE 8 (Green x=13.0, Red x=11.0, y=0.0) ───
-  # Titik tengah persis: x=12.0, y=0.0
-  - {name: gate8_center, x: 12.00, y: 0.00, speed: 0.35}
-  # ─── RIGHT GATE 9 (Green x=13.0, Red x=11.0, y=4.8) ───
-  # Titik tengah persis: x=12.0, y=4.8
-  - {name: gate9_center, x: 12.00, y: 4.80, speed: 0.35}
-  # ─── RIGHT GATE 10 (Green x=13.0, Red x=11.0, y=8.8) ───
-  # Titik tengah persis: x=12.0, y=8.8
+  - {name: start_a, x: 10.80, y: -8.70, speed: 0.28}
+  - {name: pre_gate8, x: 12.00, y: -4.00, speed: 0.42}
+  - {name: gate8_approach, x: 12.00, y: -1.00, speed: 0.34}
+  - {name: gate8_center, x: 12.00, y: 0.00, speed: 0.30}
+  - {name: gate8_exit, x: 12.00, y: 1.00, speed: 0.34}
+  - {name: gate9_approach, x: 12.00, y: 3.80, speed: 0.34}
+  - {name: gate9_center, x: 12.00, y: 4.80, speed: 0.30}
+  - {name: gate9_exit, x: 12.00, y: 5.80, speed: 0.34}
+  - {name: gate10_approach, x: 12.00, y: 7.80, speed: 0.32}
   - {name: gate10_center, x: 12.00, y: 8.80, speed: 0.28}
-  # Corner approach to top gates (clear of corner buoys)
-  - {name: corner_top_right, x: 9.00, y: 12.00, speed: 0.22}
-  # ─── TOP GATE 7 (Green y=13.0, Red y=11.0, x=6.2) ───
-  # Titik tengah persis: x=6.2, y=12.0
-  - {name: gate7_center, x: 6.20, y: 12.00, speed: 0.28}
-  # ─── TOP GATE 6 (Green y=13.0, Red y=11.0, x=2.4) ───
-  # Titik tengah persis: x=2.4, y=12.0
-  - {name: gate6_center, x: 2.40, y: 12.00, speed: 0.32}
-  # ─── TOP GATE 5 (Green y=13.0, Red y=11.0, x=-1.4) ───
-  # Titik tengah persis: x=-1.4, y=12.0
-  - {name: gate5_center, x: -1.40, y: 12.00, speed: 0.32}
-  # ─── TOP GATE 4 (Green y=13.0, Red y=11.0, x=-5.2) ───
-  # Titik tengah persis: x=-5.2, y=12.0
-  - {name: gate4_center, x: -5.20, y: 12.00, speed: 0.28}
-  # Corner approach to left gates
-  - {name: corner_top_left, x: -9.00, y: 12.00, speed: 0.22}
-  # ─── LEFT GATE 3 (Green x=-13.0, Red x=-11.0, y=8.8) ───
-  # Titik tengah persis: x=-12.0, y=8.8
+  - {name: gate10_exit, x: 12.00, y: 9.80, speed: 0.24}
+  - {name: top_right_entry, x: 12.00, y: 10.80, speed: 0.22}
+  - {name: top_right_turn, x: 11.20, y: 11.60, speed: 0.18}
+  - {name: corner_top_right, x: 9.20, y: 12.00, speed: 0.20}
+  - {name: gate7_approach, x: 7.20, y: 12.00, speed: 0.26}
+  - {name: gate7_center, x: 6.20, y: 12.00, speed: 0.24}
+  - {name: gate7_exit, x: 5.20, y: 12.00, speed: 0.26}
+  - {name: gate6_approach, x: 3.40, y: 12.00, speed: 0.26}
+  - {name: gate6_center, x: 2.40, y: 12.00, speed: 0.24}
+  - {name: gate6_exit, x: 1.40, y: 12.00, speed: 0.26}
+  - {name: gate5_approach, x: -0.40, y: 12.00, speed: 0.26}
+  - {name: gate5_center, x: -1.40, y: 12.00, speed: 0.24}
+  - {name: gate5_exit, x: -2.40, y: 12.00, speed: 0.26}
+  - {name: gate4_approach, x: -4.20, y: 12.00, speed: 0.26}
+  - {name: gate4_center, x: -5.20, y: 12.00, speed: 0.24}
+  - {name: gate4_exit, x: -6.20, y: 12.00, speed: 0.26}
+  - {name: corner_top_left, x: -8.20, y: 12.00, speed: 0.22}
+  - {name: top_left_turn, x: -11.20, y: 11.60, speed: 0.18}
+  - {name: gate3_approach, x: -12.00, y: 9.80, speed: 0.24}
   - {name: gate3_center, x: -12.00, y: 8.80, speed: 0.28}
-  # ─── LEFT GATE 2 (Green x=-13.0, Red x=-11.0, y=4.8) ───
-  # Titik tengah persis: x=-12.0, y=4.8
-  - {name: gate2_center, x: -12.00, y: 4.80, speed: 0.35}
-  # ─── LEFT GATE 1 (Green x=-13.0, Red x=-11.0, y=0.0) ───
-  # Titik tengah persis: x=-12.0, y=0.0
-  - {name: gate1_center, x: -12.00, y: 0.00, speed: 0.38}
-  # Exit left gate zone, head south toward photo targets
+  - {name: gate3_exit, x: -12.00, y: 7.80, speed: 0.32}
+  - {name: gate2_approach, x: -12.00, y: 5.80, speed: 0.34}
+  - {name: gate2_center, x: -12.00, y: 4.80, speed: 0.30}
+  - {name: gate2_exit, x: -12.00, y: 3.80, speed: 0.34}
+  - {name: gate1_approach, x: -12.00, y: 1.00, speed: 0.34}
+  - {name: gate1_center, x: -12.00, y: 0.00, speed: 0.30}
+  - {name: gate1_exit, x: -12.00, y: -1.00, speed: 0.34}
   - {name: post_gate1_exit, x: -11.20, y: -3.80, speed: 0.35}
   # ─── SURFACE PHOTO (Target: green box at x=-10.2, y=-5.4) ───
   - {name: surface_photo_approach, x: -8.50, y: -3.80, speed: 0.35}

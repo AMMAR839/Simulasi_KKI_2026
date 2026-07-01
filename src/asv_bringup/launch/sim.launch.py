@@ -62,6 +62,8 @@ def generate_launch_description():
     spawn_yaw = LaunchConfiguration("spawn_yaw")
     world_name = LaunchConfiguration("world_name")
     headless = LaunchConfiguration("headless")
+    mux_auto_topic = LaunchConfiguration("mux_auto_topic")
+    mux_output_topic = LaunchConfiguration("mux_output_topic")
 
     desc_share = FindPackageShare("asv_description")
     gazebo_share = FindPackageShare("asv_gazebo")
@@ -155,6 +157,8 @@ def generate_launch_description():
                 default_value="true",
                 description="Show Gazebo LiDAR rays. Set false to hide rays without disabling /asv/lidar/scan.",
             ),
+            DeclareLaunchArgument("mux_auto_topic", default_value="/cmd_vel_auto"),
+            DeclareLaunchArgument("mux_output_topic", default_value="/cmd_vel"),
             SetEnvironmentVariable(
                 name="ASV_CLEAN_LD_LIBRARY_PATH",
                 value=BASE_LD_LIBRARY_PATH,
@@ -221,6 +225,8 @@ def generate_launch_description():
                         "use_sim_time": use_sim_time,
                         "auto_mode": auto_mode,
                         "default_mode": default_mode,
+                        "auto_cmd_topic": mux_auto_topic,
+                        "output_topic": mux_output_topic,
                     }
                 ],
             ),

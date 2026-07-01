@@ -4,68 +4,90 @@
 # Uses LiDAR scan to create safety zones around the boat.
 # Replaces the old custom collision_monitor.py node.
 #
-# Zone structure (viewed from above, boat facing right →):
+# Zone structure (viewed from above, boat facing right ->):
 #
-#  ┌──────────────────────────────────────┐  ← slow_polygon (3.0m front)
-#  │   ┌──────────────────────────┐       │  ← approach_polygon (1.8m)
-#  │   │   ┌──────────────┐      │       │  ← stop_polygon (0.6m)
+#  ┌────────────────────────┐  <- slow_polygon (1.5m front)
+#  │   ┌────────────┐       │  <- approach_polygon (0.9m)
+#  │   │   ┌──────┐     │       │  <- stop_polygon (0.5m)
 #  │   │   │   [BOAT]     │      │       │
 #  │   │   └──────────────┘      │       │
 #  │   └──────────────────────────┘       │
 #  └──────────────────────────────────────┘
 #
 # Actions:
-#   STOP:     obstacle in stop_polygon    → cmd_vel.linear.x = 0
-#   SLOWDOWN: obstacle in approach_polygon → speed scaled
-#   LIMIT:    obstacle in slow_polygon    → max speed 0.3 m/s
+#   STOP:     obstacle in stop_polygon     -> cmd_vel.linear.x = 0
+#   SLOWDOWN: obstacle in approach_polygon -> speed scaled
+#   LIMIT:    obstacle in slow_polygon     -> max speed 0.50 m/s
 # ============================================================
 
-collision_monitor:
+nav2_collision_monitor:
   ros__parameters:
     use_sim_time: true
     base_frame_id: "base_link"
     odom_frame_id: "odom"
-    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_in_topic: "/cmd_vel_selected"
     cmd_vel_out_topic: "cmd_vel"
     state_topic: "collision_monitor_state"
     transform_tolerance: 0.5
     source_timeout: 2.0
     base_shift_correction: true
     stop_pub_timeout: 2.0
+    enable_stamped_cmd_vel: false
 
     # ── Collision polygons ─────────────────────────────────
     polygons: ["stop_polygon", "approach_polygon", "slow_polygon"]
 
-    # STOP zone: 0.8m in front, full width of boat
-    # If any obstacle is here → full stop (replaces old reverse logic)
+    # STOP zone: small core in front of the hull.
+    # Keep this tight so side buoys in a gate do not cause full stops.
     stop_polygon:
-      type: "polygon"
+      type: "velocity_polygon"
       action_type: "stop"
       min_points: 3
-      points: "[[0.80, 0.38], [0.80, -0.38], [-0.20, -0.38], [-0.20, 0.38]]"
+      holonomic: false
+      velocity_polygons: ["forward", "backward", "rotation"]
+      forward:
+        points: "[[0.50, 0.22], [0.50, -0.22], [-0.05, -0.22], [-0.05, 0.22]]"
+        linear_min: 0.01
+        linear_max: 0.60
+        theta_min: -1.0
+        theta_max: 1.0
+      backward:
+        points: "[[0.05, 0.22], [0.05, -0.22], [-0.45, -0.22], [-0.45, 0.22]]"
+        linear_min: -0.30
+        linear_max: -0.01
+        theta_min: -1.0
+        theta_max: 1.0
+      rotation:
+        points: "[[0.25, 0.20], [0.25, -0.20], [-0.25, -0.20], [-0.25, 0.20]]"
+        linear_min: -0.01
+        linear_max: 0.01
+        theta_min: -1.0
+        theta_max: 1.0
       visualize: true
       polygon_pub_topic: "collision_monitor/stop_polygon"
       enabled: true
 
-    # SLOWDOWN zone: 1.8m front — scale speed proportionally
+    # SLOWDOWN zone: only slightly wider than the 0.56 m navigation footprint.
+    # Its short reach prevents gate buoys at the sides from reducing speed long
+    # before the hull enters the gate.
     approach_polygon:
       type: "polygon"
       action_type: "slowdown"
       min_points: 3
-      slowdown_ratio: 0.5
-      points: "[[1.80, 0.55], [1.80, -0.55], [-0.30, -0.55], [-0.30, 0.55]]"
+      slowdown_ratio: 0.85
+      points: "[[0.90, 0.30], [0.90, -0.30], [-0.10, -0.30], [-0.10, 0.30]]"
       visualize: true
       polygon_pub_topic: "collision_monitor/approach_polygon"
       enabled: true
 
-    # LIMIT speed zone: 3.0m front — cap speed at 0.30 m/s
+    # LIMIT speed zone: only obstacles close to the intended path cap speed.
     slow_polygon:
       type: "polygon"
       action_type: "limit"
       min_points: 3
-      linear_limit: 0.30
-      angular_limit: 0.8
-      points: "[[3.00, 0.80], [3.00, -0.80], [-0.40, -0.80], [-0.40, 0.80]]"
+      linear_limit: 0.50
+      angular_limit: 1.0
+      points: "[[1.50, 0.38], [1.50, -0.38], [-0.15, -0.38], [-0.15, 0.38]]"
       visualize: true
       polygon_pub_topic: "collision_monitor/slow_polygon"
       enabled: true

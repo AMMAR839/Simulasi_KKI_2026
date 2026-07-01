@@ -2,6 +2,7 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.conditions import IfCondition
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -46,9 +47,18 @@ BRIDGE_ARGUMENTS = [
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time")
+    enable_lidar_pointcloud = LaunchConfiguration("enable_lidar_pointcloud")
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="true"),
+            DeclareLaunchArgument(
+                "enable_lidar_pointcloud",
+                default_value="false",
+                description=(
+                    "Bridge the simulator-only multi-layer LiDAR point cloud. "
+                    "LaserScan remains the minimum hardware interface."
+                ),
+            ),
             TimerAction(
                 period=8.0,
                 actions=[
@@ -63,12 +73,30 @@ def generate_launch_description():
                 ],
             ),
             TimerAction(
+                period=8.0,
+                actions=[
+                    Node(
+                        package="ros_gz_bridge",
+                        executable="parameter_bridge",
+                        name="asv_lidar_points_bridge",
+                        output="screen",
+                        arguments=[
+                            "/asv/lidar/scan/points"
+                            "@sensor_msgs/msg/PointCloud2"
+                            "[gz.msgs.PointCloudPacked"
+                        ],
+                        parameters=[{"use_sim_time": use_sim_time}],
+                        condition=IfCondition(enable_lidar_pointcloud),
+                    )
+                ],
+            ),
+            TimerAction(
                 period=10.0,
                 actions=[
                     Node(
                         package="asv_sensors",
                         executable="collision_monitor",
-                        name="asv_contact_monitor",
+                        name="contact_monitor",
                         output="screen",
                         parameters=[{"use_sim_time": use_sim_time}],
                     ),

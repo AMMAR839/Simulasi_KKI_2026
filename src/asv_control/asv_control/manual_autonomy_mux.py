@@ -28,6 +28,9 @@ class ManualAutonomyMux(Node):
         self.declare_parameter("manual_timeout_s", 0.5)
         self.declare_parameter("auto_timeout_s", 1.0)
         self.declare_parameter("publish_rate_hz", 30.0)
+        self.declare_parameter("manual_cmd_topic", "/cmd_vel_manual")
+        self.declare_parameter("auto_cmd_topic", "/cmd_vel_auto")
+        self.declare_parameter("output_topic", "/cmd_vel")
 
         self.mode = self.startup_mode()
         self.estop = False
@@ -39,11 +42,23 @@ class ManualAutonomyMux(Node):
         self.auto_timeout = float(self.get_parameter("auto_timeout_s").value)
         self.last_logged_mode = None
 
-        self.cmd_pub = self.create_publisher(Twist, "/cmd_vel", 10)
+        self.cmd_pub = self.create_publisher(
+            Twist, str(self.get_parameter("output_topic").value), 10
+        )
         self.status_pub = self.create_publisher(String, "/asv/control/mode_status", 10)
 
-        self.create_subscription(Twist, "/cmd_vel_manual", self.on_manual, 10)
-        self.create_subscription(Twist, "/cmd_vel_auto", self.on_auto, 10)
+        self.create_subscription(
+            Twist,
+            str(self.get_parameter("manual_cmd_topic").value),
+            self.on_manual,
+            10,
+        )
+        self.create_subscription(
+            Twist,
+            str(self.get_parameter("auto_cmd_topic").value),
+            self.on_auto,
+            10,
+        )
         self.create_subscription(String, "/asv/mode", self.on_mode, 10)
         self.create_subscription(Bool, "/asv/emergency_stop", self.on_estop, 10)
 

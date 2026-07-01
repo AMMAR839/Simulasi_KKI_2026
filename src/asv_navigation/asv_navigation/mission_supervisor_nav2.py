@@ -21,6 +21,7 @@ import math
 import time
 from pathlib import Path
 
+import numpy as np
 import rclpy
 import yaml
 from action_msgs.msg import GoalStatus
@@ -73,28 +74,37 @@ def normalize_angle(angle: float) -> float:
 def _count_color_pixels(msg, target: str) -> int:
     if msg is None or not msg.data:
         return 0
-    enc = msg.encoding.lower()
-    channels = 4 if enc in ("rgba8", "bgra8") else 3
-    src = bytes(msg.data)
-    count = 0
-    stride = 6
-    for row in range(0, msg.height, stride):
-        for col in range(0, msg.width, stride):
-            idx = row * msg.step + col * channels
-            if idx + channels > len(src):
-                continue
-            px = src[idx: idx + channels]
-            if enc in ("bgr8", "bgra8"):
-                r, g, b = px[2], px[1], px[0]
-            else:
-                r, g, b = px[0], px[1], px[2]
-            if target == "green":
-                if g > r + 30 and g > b + 30 and g > 80:
-                    count += 1
-            elif target == "blue":
-                if b > r + 30 and b > g + 20 and b > 80:
-                    count += 1
-    return count
+    try:
+        enc = msg.encoding.lower()
+        channels = 4 if enc in ("rgba8", "bgra8") else 3
+        img_arr = np.frombuffer(msg.data, dtype=np.uint8)
+        
+        if msg.step == msg.width * channels:
+            img_3d = img_arr.reshape((msg.height, msg.width, channels))
+        else:
+            img_3d = img_arr.reshape((msg.height, msg.step))[:, :msg.width * channels].reshape((msg.height, msg.width, channels))
+            
+        stride = 6
+        img_sampled = img_3d[::stride, ::stride, :]
+        
+        if enc in ("bgr8", "bgra8"):
+            r = img_sampled[:, :, 2]
+            g = img_sampled[:, :, 1]
+            b = img_sampled[:, :, 0]
+        else:
+            r = img_sampled[:, :, 0]
+            g = img_sampled[:, :, 1]
+            b = img_sampled[:, :, 2]
+            
+        if target == "green":
+            mask = (g > r + 30) & (g > b + 30) & (g > 80)
+            return int(np.sum(mask))
+        elif target == "blue":
+            mask = (b > r + 30) & (b > g + 20) & (b > 80)
+            return int(np.sum(mask))
+    except Exception as exc:
+        pass
+    return 0
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -752,31 +762,30 @@ class MissionSupervisorNav2(Node):
         path = self.capture_dir / f"{stem}.{suffix}"
         try:
             channels = 4 if enc in ("rgba8", "bgra8") else 3
-            src = bytes(msg.data)
+            img_arr = np.frombuffer(msg.data, dtype=np.uint8)
+            
             if suffix == "ppm":
-                rows = []
-                for row in range(msg.height):
-                    start = row * msg.step
-                    raw = src[start: start + msg.width * channels]
-                    pixels = bytearray()
-                    for idx in range(0, len(raw), channels):
-                        px = raw[idx: idx + channels]
-                        if len(px) < channels:
-                            continue
-                        if enc in ("bgr8", "bgra8"):
-                            pixels.extend((px[2], px[1], px[0]))
-                        else:
-                            pixels.extend((px[0], px[1], px[2]))
-                    rows.append(bytes(pixels))
+                if msg.step == msg.width * channels:
+                    img_3d = img_arr.reshape((msg.height, msg.width, channels))
+                else:
+                    img_3d = img_arr.reshape((msg.height, msg.step))[:, :msg.width * channels].reshape((msg.height, msg.width, channels))
+                
+                if enc in ("bgr8", "bgra8"):
+                    rgb_arr = img_3d[:, :, [2, 1, 0]]
+                else:
+                    rgb_arr = img_3d[:, :, :3]
+                    
+                payload = rgb_arr.tobytes()
                 header = f"P6\n{msg.width} {msg.height}\n255\n".encode("ascii")
-                path.write_bytes(header + b"".join(rows))
             else:
-                rows = []
-                for row in range(msg.height):
-                    start = row * msg.step
-                    rows.append(src[start: start + msg.width])
+                if msg.step == msg.width:
+                    payload = img_arr.tobytes()
+                else:
+                    payload = img_arr.reshape((msg.height, msg.step))[:, :msg.width].tobytes()
+                    
                 header = f"P5\n{msg.width} {msg.height}\n255\n".encode("ascii")
-                path.write_bytes(header + b"".join(rows))
+                
+            path.write_bytes(header + payload)
             self.get_logger().info(f"[PHOTO] Saved: {path}")
             return str(path)
         except Exception as exc:
