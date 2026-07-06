@@ -116,8 +116,9 @@ class MissionSupervisorNav2V2(Node):
         )
         self.declare_parameter("search_yaw_rate_radps", 0.22)
         self.declare_parameter("search_timeout_lap1_s", 110.0)
-        self.declare_parameter("search_timeout_lap2_s", 16.0)
+        self.declare_parameter("search_timeout_lap2_s", 32.0)
         self.declare_parameter("search_timeout_lap2_retry_s", 120.0)
+        self.declare_parameter("photo_lap2_max_retries", 2)
         self.declare_parameter("search_tracking_timeout_s", 45.0)
         self.declare_parameter("search_hint_timeout_s", 35.0)
         self.declare_parameter("photo_min_range_m", 1.0)
@@ -129,19 +130,32 @@ class MissionSupervisorNav2V2(Node):
         self.declare_parameter("photo_down_center_tolerance", 0.35)
         self.declare_parameter("photo_range_adjust_speed_mps", 0.14)
         self.declare_parameter("photo_hint_association_radius_m", 1.2)
+        self.declare_parameter("photo_down_hint_association_radius_m", 2.2)
         self.declare_parameter("photo_search_start_radius_m", 4.5)
         self.declare_parameter("lap2_search_limit_rad", math.radians(30.0))
         self.declare_parameter("photo_escape_distance_m", 1.0)
         self.declare_parameter("photo_escape_speed_mps", 0.18)
         self.declare_parameter("photo_escape_yaw_rate_radps", 0.32)
         self.declare_parameter("photo_escape_timeout_s", 35.0)
+        self.declare_parameter("photo_exit_corridor_y_m", -9.3)
+        self.declare_parameter("photo_exit_corridor_x_min_m", -13.0)
+        self.declare_parameter("photo_exit_corridor_x_max_m", 8.0)
+        self.declare_parameter("bottom_corridor_y_m", -9.2)
+        self.declare_parameter("bottom_corridor_x_min_m", -13.0)
+        self.declare_parameter("bottom_corridor_x_max_m", 8.0)
+        self.declare_parameter("bottom_corridor_pass_margin_m", 2.0)
         self.declare_parameter("dock_nudge_distance_m", 4.0)
         self.declare_parameter("dock_nudge_finish_radius_m", 0.65)
-        self.declare_parameter("dock_nudge_speed_mps", 0.20)
+        self.declare_parameter("dock_nudge_speed_mps", 0.22)
         self.declare_parameter("dock_nudge_timeout_s", 60.0)
         self.declare_parameter("dock_action_timeout_s", 30.0)
         self.declare_parameter("dock_contact_speed_mps", 0.08)
-        self.declare_parameter("dock_contact_timeout_s", 180.0)
+        self.declare_parameter("dock_contact_timeout_s", 240.0)
+        self.declare_parameter("dock_contact_lateral_retry_after_s", 22.0)
+        self.declare_parameter("dock_contact_push_cycle_s", 24.0)
+        self.declare_parameter("dock_contact_stage_offset_m", 0.95)
+        self.declare_parameter("dock_contact_max_retries", 1)
+        self.declare_parameter("speed_limit_max_mps", 0.68)
         self.declare_parameter("max_nav_retries", 2)
         self.declare_parameter("nav_goal_stall_timeout_s", 8.0)
         self.declare_parameter("nav_retry_backoff_s", 2.0)
@@ -157,19 +171,20 @@ class MissionSupervisorNav2V2(Node):
         self.declare_parameter("gate_approach_direct_nudge_distance_m", 3.0)
         self.declare_parameter("gate_approach_nudge_distance_m", 3.2)
         self.declare_parameter("gate_approach_nudge_finish_radius_m", 0.85)
+        self.declare_parameter("gate_approach_projection_margin", 0.90)
         self.declare_parameter("pre_gate_nudge_distance_m", 3.5)
         self.declare_parameter("pre_gate_nudge_finish_radius_m", 1.0)
         self.declare_parameter("turn_nudge_distance_m", 4.5)
         self.declare_parameter("turn_nudge_finish_radius_m", 1.3)
         self.declare_parameter("gate_nudge_projection_margin", 0.25)
         self.declare_parameter("gate_nudge_exit_margin_m", 0.90)
-        self.declare_parameter("gate_nudge_finish_clearance_m", 0.70)
-        self.declare_parameter("gate_nudge_speed_mps", 0.27)
-        self.declare_parameter("lap2_gate_nudge_speed_mps", 0.31)
-        self.declare_parameter("gate_nudge_timeout_s", 30.0)
-        self.declare_parameter("gate_collision_recenter_distance_m", 1.2)
-        self.declare_parameter("gate_collision_recenter_radius_m", 0.30)
-        self.declare_parameter("gate_collision_recenter_speed_mps", 0.14)
+        self.declare_parameter("gate_nudge_finish_clearance_m", 0.25)
+        self.declare_parameter("gate_nudge_speed_mps", 0.28)
+        self.declare_parameter("lap2_gate_nudge_speed_mps", 0.34)
+        self.declare_parameter("gate_nudge_timeout_s", 22.0)
+        self.declare_parameter("gate_collision_recenter_distance_m", 0.75)
+        self.declare_parameter("gate_collision_recenter_radius_m", 0.45)
+        self.declare_parameter("gate_collision_recenter_speed_mps", 0.16)
         self.declare_parameter("lap2_min_coverage_percent", 8.0)
         self.declare_parameter("lap2_compress_gate_waypoints", True)
 
@@ -227,10 +242,14 @@ class MissionSupervisorNav2V2(Node):
         self.photo_escape = None
         self.capture_poses = {}
         self.photos = {1: set(), 2: set()}
+        self.photo_search_retries = {}
         self.gates_crossed = {1: set(), 2: set()}
         self.contacts = {1: set(), 2: set()}
         self.dock_success = {1: False, 2: False}
         self.dock_contact_stage = None
+        self.dock_contact_stage_started = 0.0
+        self.dock_contact_target_y = None
+        self.dock_contact_retries = {1: 0, 2: 0}
         self.latest_collision_status = "clear"
         self.latest_collision_time = 0.0
         self.last_collision_enable_request = 0.0
@@ -428,14 +447,23 @@ class MissionSupervisorNav2V2(Node):
             if self.action_in_progress:
                 if (
                     not self._maybe_start_dock_nudge(now)
+                    and not self._maybe_accept_photo_exit_corridor(now)
+                    and not self._maybe_accept_bottom_corridor_transit(now)
                     and not self._maybe_accept_near_gate_exit(now)
                     and not self._maybe_start_gate_nudge(now, "near gate center")
+                    and not self._maybe_start_gate_approach_nudge(
+                        now, "near gate approach corridor"
+                    )
                     and not self._maybe_accept_near_optional_waypoint(now)
                     and not self._maybe_accept_near_gate_approach(now)
                     and not self._maybe_skip_passed_optional_waypoint(now)
                 ):
                     self._check_navigation_watchdog(now)
             elif self._maybe_skip_passed_optional_waypoint(now):
+                return
+            elif self._maybe_accept_photo_exit_corridor(now):
+                return
+            elif self._maybe_accept_bottom_corridor_transit(now):
                 return
             elif self._maybe_accept_near_optional_waypoint(now):
                 return
@@ -606,6 +634,11 @@ class MissionSupervisorNav2V2(Node):
         self.nav_retries = 0
         waypoint = self.navigation_waypoints[self.waypoint_index]
         self.waypoint_index += 1
+        if waypoint["name"].endswith("_photo_approach"):
+            self._begin_photo_target_nudge(
+                time.monotonic(), "photo approach reached"
+            )
+            return
         if waypoint["name"] in SURFACE_WAYPOINTS:
             self._start_search("surface_box", "front")
         elif waypoint["name"] in UNDERWATER_WAYPOINTS:
@@ -687,7 +720,9 @@ class MissionSupervisorNav2V2(Node):
             waypoint["x"] - self.pose[0],
             waypoint["y"] - self.pose[1],
         )
-        distance = min(target_distance, approach_distance)
+        distance = target_distance if name.endswith("_photo_approach") else min(
+            target_distance, approach_distance
+        )
         radius = float(self.get_parameter("photo_search_start_radius_m").value)
         if target_name in UNDERWATER_WAYPOINTS:
             radius = min(radius, 3.0)
@@ -808,6 +843,9 @@ class MissionSupervisorNav2V2(Node):
         self.nav_retries = 0
         self.nav_retry_after = now + 0.1
         self.waypoint_index += 1
+        if waypoint["name"].endswith("_photo_approach"):
+            self._begin_photo_target_nudge(now, "passed photo approach")
+            return True
         self._start_search_for_next_photo()
         return True
 
@@ -836,6 +874,9 @@ class MissionSupervisorNav2V2(Node):
         self.nav_retries = 0
         self.nav_retry_after = now + 0.1
         self.waypoint_index += 1
+        if waypoint["name"].endswith("_photo_approach"):
+            self._begin_photo_target_nudge(now, "accepted photo approach")
+            return True
         self._start_search_for_next_photo()
         return True
 
@@ -845,6 +886,85 @@ class MissionSupervisorNav2V2(Node):
         if any(token in name for token in ("turn", "corner", "entry")):
             return float(self.get_parameter("turn_accept_radius_m").value)
         return float(self.get_parameter("optional_accept_radius_m").value)
+
+    def _maybe_accept_photo_exit_corridor(self, now):
+        if self.pose is None or self.waypoint_index >= len(self.navigation_waypoints):
+            return False
+        waypoint = self.navigation_waypoints[self.waypoint_index]
+        if waypoint["name"] != "photo_exit_south":
+            return False
+        if not {"surface_box", "underwater_box"}.issubset(self.photos[self.lap]):
+            return False
+        x_min = float(self.get_parameter("photo_exit_corridor_x_min_m").value)
+        x_max = float(self.get_parameter("photo_exit_corridor_x_max_m").value)
+        if self.course == "b":
+            x_min, x_max = -x_max, -x_min
+        y_limit = float(self.get_parameter("photo_exit_corridor_y_m").value)
+        if not (x_min <= self.pose[0] <= x_max and self.pose[1] <= y_limit):
+            return False
+        handle = self.nav_goal_handle
+        self.nav_goal_token += 1
+        if handle is not None:
+            try:
+                handle.cancel_goal_async()
+            except Exception as exc:
+                self.get_logger().warn(
+                    f"Failed to cancel photo exit corridor waypoint: {exc}"
+                )
+        self.get_logger().warn(
+            f"Accepting photo_exit_south from safe south corridor at "
+            f"pose=({self.pose[0]:.2f}, {self.pose[1]:.2f})"
+        )
+        self.action_in_progress = False
+        self.nav_goal_handle = None
+        self.nav_retries = 0
+        self.nav_retry_after = now + 0.1
+        self.waypoint_index += 1
+        return True
+
+    def _maybe_accept_bottom_corridor_transit(self, now):
+        if self.pose is None or self.waypoint_index >= len(self.navigation_waypoints):
+            return False
+        waypoint = self.navigation_waypoints[self.waypoint_index]
+        if waypoint["name"] != "path_13":
+            return False
+        if not {"surface_box", "underwater_box"}.issubset(self.photos[self.lap]):
+            return False
+
+        x_min = float(self.get_parameter("bottom_corridor_x_min_m").value)
+        x_max = float(self.get_parameter("bottom_corridor_x_max_m").value)
+        if self.course == "b":
+            x_min, x_max = -x_max, -x_min
+        y_limit = float(self.get_parameter("bottom_corridor_y_m").value)
+        if not (x_min <= self.pose[0] <= x_max and self.pose[1] <= y_limit):
+            return False
+
+        direction = 1.0 if self.course == "a" else -1.0
+        pass_margin = float(
+            self.get_parameter("bottom_corridor_pass_margin_m").value
+        )
+        if (self.pose[0] - float(waypoint["x"])) * direction < pass_margin:
+            return False
+
+        handle = self.nav_goal_handle
+        self.nav_goal_token += 1
+        if handle is not None:
+            try:
+                handle.cancel_goal_async()
+            except Exception as exc:
+                self.get_logger().warn(
+                    f"Failed to cancel bottom corridor transit waypoint: {exc}"
+                )
+        self.get_logger().warn(
+            f"Skipping {waypoint['name']} because the boat is already in the "
+            f"bottom transit corridor at pose=({self.pose[0]:.2f}, {self.pose[1]:.2f})"
+        )
+        self.action_in_progress = False
+        self.nav_goal_handle = None
+        self.nav_retries = 0
+        self.nav_retry_after = now + 0.1
+        self.waypoint_index += 1
+        return True
 
     def _maybe_accept_near_gate_exit(self, now, reason=""):
         if self.pose is None or self.waypoint_index >= len(self.navigation_waypoints):
@@ -967,7 +1087,7 @@ class MissionSupervisorNav2V2(Node):
             return False
         state = self._gate_line_state(gate_name)
         projection_margin = float(
-            self.get_parameter("gate_nudge_projection_margin").value
+            self.get_parameter("gate_approach_projection_margin").value
         )
         if state is None or not (
             -projection_margin <= state["projection"] <= 1.0 + projection_margin
@@ -1094,6 +1214,8 @@ class MissionSupervisorNav2V2(Node):
         reason="",
         speed=None,
         timeout=None,
+        search_after=None,
+        advance_index=True,
     ):
         handle = self.nav_goal_handle
         self.nav_goal_token += 1
@@ -1123,11 +1245,44 @@ class MissionSupervisorNav2V2(Node):
             self.gate_nudge["speed"] = float(speed)
         if timeout is not None:
             self.gate_nudge["timeout"] = float(timeout)
+        if search_after is not None:
+            self.gate_nudge["search_after"] = tuple(search_after)
+        self.gate_nudge["advance_index"] = bool(advance_index)
         self.phase = "GATE_NUDGE"
         self.source_pub.publish(String(data="task"))
         self._publish_speed(
             float(speed) if speed is not None else self._gate_nudge_speed()
         )
+
+    def _begin_photo_target_nudge(self, now, reason=""):
+        if self.pose is None or self.waypoint_index >= len(self.navigation_waypoints):
+            return False
+        waypoint = self.navigation_waypoints[self.waypoint_index]
+        name = waypoint["name"]
+        if name in SURFACE_WAYPOINTS:
+            search_after = ("surface_box", "front")
+            speed = 0.18
+            finish_radius = 0.70
+        elif name in UNDERWATER_WAYPOINTS:
+            search_after = ("underwater_box", "down")
+            speed = 0.16
+            finish_radius = 0.50
+        else:
+            return False
+        distance = math.hypot(
+            waypoint["x"] - self.pose[0], waypoint["y"] - self.pose[1]
+        )
+        self._begin_waypoint_nudge(
+            now,
+            waypoint,
+            distance,
+            finish_radius=finish_radius,
+            reason=reason,
+            speed=speed,
+            timeout=60.0,
+            search_after=search_after,
+        )
+        return True
 
     def _gate_line_state(self, gate_name):
         if self.pose is None or gate_name not in GATES:
@@ -1356,13 +1511,21 @@ class MissionSupervisorNav2V2(Node):
         return float(self.get_parameter(parameter).value)
 
     def _finish_gate_nudge(self, success):
+        search_after = None
+        advance_index = True
+        if self.gate_nudge is not None:
+            search_after = self.gate_nudge.get("search_after")
+            advance_index = bool(self.gate_nudge.get("advance_index", True))
         self.task_cmd_pub.publish(Twist())
         self.source_pub.publish(String(data="nav"))
-        if success:
+        if success and advance_index:
             self.waypoint_index += 1
         self.nav_retries = 0
         self.nav_retry_after = time.monotonic() + 0.1
         self.gate_nudge = None
+        if search_after is not None:
+            self._start_search(search_after[0], search_after[1])
+            return
         self.phase = "NAVIGATE"
 
     def _maybe_accept_near_gate_approach(self, now, reason=""):
@@ -1568,12 +1731,13 @@ class MissionSupervisorNav2V2(Node):
 
     def _run_search(self, now):
         known = self.search_target in self.capture_poses
+        retry_count = self.photo_search_retries.get(
+            (self.lap, self.search_target), 0
+        )
         if self.lap == 2:
-            timeout_parameter = (
-                "search_timeout_lap2_s"
-                if known
-                else "search_timeout_lap2_retry_s"
-            )
+            timeout_parameter = "search_timeout_lap2_s"
+            if not known or retry_count > 0:
+                timeout_parameter = "search_timeout_lap2_retry_s"
         else:
             timeout_parameter = "search_timeout_lap1_s"
         timeout = float(self.get_parameter(timeout_parameter).value)
@@ -1700,7 +1864,11 @@ class MissionSupervisorNav2V2(Node):
         hint_timeout = float(
             self.get_parameter("search_hint_timeout_s").value
         )
-        if self.search_hint_yaw is not None and elapsed < hint_timeout:
+        if (
+            self.search_hint_yaw is not None
+            and retry_count <= 0
+            and elapsed < hint_timeout
+        ):
             if self.pose is None:
                 self.task_cmd_pub.publish(Twist())
                 return
@@ -1722,7 +1890,7 @@ class MissionSupervisorNav2V2(Node):
         dt = max(0.0, min(0.2, now - self.last_search_time))
         self.last_search_time = now
         yaw_rate = float(self.get_parameter("search_yaw_rate_radps").value)
-        if self.lap == 2 and known:
+        if self.lap == 2 and known and retry_count <= 0:
             limit = abs(
                 float(self.get_parameter("lap2_search_limit_rad").value)
             )
@@ -1798,7 +1966,11 @@ class MissionSupervisorNav2V2(Node):
             detected_x - hint[0], detected_y - hint[1]
         )
         association_radius = float(
-            self.get_parameter("photo_hint_association_radius_m").value
+            self.get_parameter(
+                "photo_down_hint_association_radius_m"
+                if camera == "down"
+                else "photo_hint_association_radius_m"
+            ).value
         )
         return association_error <= association_radius
 
@@ -1859,7 +2031,58 @@ class MissionSupervisorNav2V2(Node):
 
     def _finish_search(self, captured=False):
         self.task_cmd_pub.publish(Twist())
+        if captured and self.search_target is not None:
+            self.photo_search_retries[(self.lap, self.search_target)] = 0
+        elif self._maybe_retry_photo_search_after_failure():
+            return
         self._start_photo_escape(captured)
+
+    def _maybe_retry_photo_search_after_failure(self):
+        if self.lap != 2 or self.search_target is None or self.search_camera is None:
+            return False
+        key = (self.lap, self.search_target)
+        retry_count = self.photo_search_retries.get(key, 0)
+        max_retries = int(self.get_parameter("photo_lap2_max_retries").value)
+        if retry_count >= max_retries:
+            return False
+
+        self.photo_search_retries[key] = retry_count + 1
+        target = self.search_target
+        camera = self.search_camera
+        capture_pose = self.capture_poses.get(target)
+        if capture_pose is not None and self.pose is not None:
+            retry_waypoint = {
+                "name": f"{target}_capture_retry",
+                "x": float(capture_pose[0]),
+                "y": float(capture_pose[1]),
+            }
+            distance = math.hypot(
+                retry_waypoint["x"] - self.pose[0],
+                retry_waypoint["y"] - self.pose[1],
+            )
+            self.get_logger().warn(
+                f"[LAP 2] Retrying {target} from mapped capture pose "
+                f"({retry_count + 1}/{max_retries}); distance={distance:.2f}m"
+            )
+            self._begin_waypoint_nudge(
+                time.monotonic(),
+                retry_waypoint,
+                distance,
+                finish_radius=0.45 if camera == "down" else 0.65,
+                reason="HSV search timeout",
+                speed=0.15 if camera == "down" else 0.18,
+                timeout=60.0,
+                search_after=(target, camera),
+                advance_index=False,
+            )
+            return True
+
+        self.get_logger().warn(
+            f"[LAP 2] Retrying {target} with full sweep "
+            f"({retry_count + 1}/{max_retries})"
+        )
+        self._start_search(target, camera)
+        return True
 
     def _start_photo_escape(self, captured):
         now = time.monotonic()
@@ -2021,6 +2244,8 @@ class MissionSupervisorNav2V2(Node):
         self.action_in_progress = False
         self.task_started = time.monotonic()
         self.dock_contact_stage = "stage"
+        self.dock_contact_stage_started = self.task_started
+        self.dock_contact_target_y = None
         self.source_pub.publish(String(data="task"))
         self._toggle_collision_monitor(False)
 
@@ -2031,6 +2256,19 @@ class MissionSupervisorNav2V2(Node):
         if now - self.task_started > float(
             self.get_parameter("dock_contact_timeout_s").value
         ):
+            retries = self.dock_contact_retries[self.lap]
+            max_retries = int(self.get_parameter("dock_contact_max_retries").value)
+            if retries < max_retries:
+                self.dock_contact_retries[self.lap] = retries + 1
+                self.task_started = now
+                self.dock_contact_stage = "stage"
+                self.dock_contact_stage_started = now
+                self.dock_contact_target_y = None
+                self.get_logger().warn(
+                    f"Docking contact timeout at {len(self.contacts[self.lap])}/3; "
+                    f"retrying contact sweep {retries + 1}/{max_retries}"
+                )
+                return
             self.task_cmd_pub.publish(Twist())
             self.get_logger().error(
                 f"Docking contact timeout: {len(self.contacts[self.lap])}/3"
@@ -2048,14 +2286,35 @@ class MissionSupervisorNav2V2(Node):
 
         direction = 1.0 if self.course == "a" else -1.0
         dock_x = direction * 12.35
-        dock_y = -9.70
+        dock_y = self._dock_contact_target_y(now)
         dock_yaw = 0.0 if self.course == "a" else math.pi
-        stage_x = dock_x - direction * 0.75
+        stage_x = dock_x - direction * float(
+            self.get_parameter("dock_contact_stage_offset_m").value
+        )
         stage_dx = stage_x - self.pose[0]
         stage_dy = dock_y - self.pose[1]
         distance_to_stage = math.hypot(stage_dx, stage_dy)
         yaw_error = normalize_angle(dock_yaw - self.pose[2])
         command = Twist()
+
+        push_cycle_s = float(self.get_parameter("dock_contact_push_cycle_s").value)
+        should_restage_for_missing = (
+            self.dock_contact_stage == "push"
+            and 2 <= len(self.contacts[self.lap]) < 3
+            and abs(stage_dy) > 0.08
+        )
+        should_cycle_restage = (
+            self.dock_contact_stage == "push"
+            and len(self.contacts[self.lap]) < 3
+            and now - self.dock_contact_stage_started > push_cycle_s
+        )
+        if should_restage_for_missing or should_cycle_restage:
+            self.dock_contact_stage = "stage"
+            self.dock_contact_stage_started = now
+            self.get_logger().warn(
+                f"[LAP {self.lap}] Re-staging dock contact for remaining buoy "
+                f"contacts ({len(self.contacts[self.lap])}/3)"
+            )
 
         if self.dock_contact_stage == "stage":
             too_close = direction * (self.pose[0] - stage_x) > 0.08
@@ -2080,6 +2339,7 @@ class MissionSupervisorNav2V2(Node):
                 command.angular.z = clamp(0.8 * yaw_error, -0.22, 0.22)
             else:
                 self.dock_contact_stage = "push"
+                self.dock_contact_stage_started = now
                 self.get_logger().info(
                     f"[LAP {self.lap}] Dock contact pose aligned; "
                     f"pose=({self.pose[0]:.2f}, {self.pose[1]:.2f}, "
@@ -2091,8 +2351,41 @@ class MissionSupervisorNav2V2(Node):
             command.linear.x = float(
                 self.get_parameter("dock_contact_speed_mps").value
             )
-            command.angular.z = clamp(0.35 * yaw_error, -0.08, 0.08)
+            dock_dx = dock_x - self.pose[0]
+            lateral_error = dock_y - self.pose[1]
+            lateral_yaw = math.atan2(lateral_error, max(0.25, abs(dock_dx)))
+            command.angular.z = clamp(
+                0.30 * yaw_error + 0.45 * lateral_yaw,
+                -0.10,
+                0.10,
+            )
         self.task_cmd_pub.publish(command)
+
+    def _dock_contact_target_y(self, now):
+        positions = dict(zip(self.config["dock_names"], (-10.0, -9.7, -9.4)))
+        missing = [
+            name
+            for name in self.config["dock_names"]
+            if name not in self.contacts[self.lap]
+        ]
+        retry_after = float(
+            self.get_parameter("dock_contact_lateral_retry_after_s").value
+        )
+        elapsed = now - self.task_started
+        if not missing or (
+            len(self.contacts[self.lap]) < 2 and elapsed < retry_after
+        ):
+            target_y = -9.7
+        else:
+            cycle = max(1, int(elapsed // max(1.0, retry_after)))
+            target_y = positions[missing[cycle % len(missing)]]
+        if self.dock_contact_target_y != target_y:
+            self.dock_contact_target_y = target_y
+            self.get_logger().info(
+                f"[LAP {self.lap}] Dock contact target y={target_y:.2f}; "
+                f"contacts={len(self.contacts[self.lap])}/3"
+            )
+        return target_y
 
     def _complete_docking_from_contacts(self):
         if self.dock_goal_handle is not None:
@@ -2257,7 +2550,11 @@ class MissionSupervisorNav2V2(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = "map"
         msg.percentage = False
-        msg.speed_limit = clamp(float(speed), 0.05, 0.60)
+        msg.speed_limit = clamp(
+            float(speed),
+            0.05,
+            float(self.get_parameter("speed_limit_max_mps").value),
+        )
         self.speed_limit_pub.publish(msg)
 
     def _update_gate_crossings(self, previous, current):

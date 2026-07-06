@@ -2,7 +2,7 @@
 # Nav2 Full Stack Parameters — ASV KKI 2026
 # ============================================================
 # Tuned for Autonomous Surface Vehicle (ASV) in open water:
-# - Max speed: 0.55 m/s
+# - Max speed: 0.62 m/s
 # - Regulated Pure Pursuit controller (smooth path following)
 # - Smac Hybrid-A* planner with forward-only Dubins motion model
 # - StaticLayer from survey mapping + LiDAR ObstacleLayer confirmation
@@ -65,7 +65,7 @@ controller_server:
     # Best for non-holonomic vehicles (boats, cars) on smooth paths
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 0.50
+      desired_linear_vel: 0.55
       lookahead_dist: 1.5
       min_lookahead_dist: 0.8
       max_lookahead_dist: 2.5
@@ -76,13 +76,13 @@ controller_server:
       min_approach_linear_velocity: 0.05
       approach_velocity_scaling_dist: 1.5
       use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 0.8
+      max_allowed_time_to_collision_up_to_carrot: 0.65
       use_regulated_linear_velocity_scaling: true
       use_fixed_curvature_lookahead: false
       curvature_lookahead_dist: 2.0
       use_cost_regulated_linear_velocity_scaling: false
       regulated_linear_scaling_min_radius: 2.0
-      regulated_linear_scaling_min_speed: 0.14
+      regulated_linear_scaling_min_speed: 0.18
       use_rotate_to_heading: false
       allow_reversing: false
       rotate_to_heading_min_angle: 0.785
@@ -176,10 +176,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.55, 0.0, 0.85]
+    max_velocity: [0.62, 0.0, 0.95]
     min_velocity: [-0.20, 0.0, -0.85]
-    max_accel: [1.1, 0.0, 1.4]
-    max_decel: [-1.1, 0.0, -1.4]
+    max_accel: [1.25, 0.0, 1.6]
+    max_decel: [-1.25, 0.0, -1.6]
     odom_topic: /odometry/local
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

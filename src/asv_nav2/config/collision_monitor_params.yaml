@@ -6,9 +6,9 @@
 #
 # Zone structure (viewed from above, boat facing right ->):
 #
-#  ┌────────────────────────┐  <- slow_polygon (1.5m front)
-#  │   ┌────────────┐       │  <- approach_polygon (0.9m)
-#  │   │   ┌──────┐     │       │  <- stop_polygon (0.5m)
+#  ┌────────────────────┐  <- slow_polygon (1.05m front)
+#  │   ┌──────────┐     │  <- approach_polygon (0.68m)
+#  │   │ ┌──────┐ │     │  <- stop_polygon (0.38m)
 #  │   │   │   [BOAT]     │      │       │
 #  │   │   └──────────────┘      │       │
 #  │   └──────────────────────────┘       │
@@ -17,7 +17,7 @@
 # Actions:
 #   STOP:     obstacle in stop_polygon     -> cmd_vel.linear.x = 0
 #   SLOWDOWN: obstacle in approach_polygon -> speed scaled
-#   LIMIT:    obstacle in slow_polygon     -> max speed 0.50 m/s
+#   LIMIT:    obstacle in slow_polygon     -> max speed 0.64 m/s
 # ============================================================
 
 nav2_collision_monitor:
@@ -46,23 +46,23 @@ nav2_collision_monitor:
       holonomic: false
       velocity_polygons: ["forward", "backward", "rotation"]
       forward:
-        points: "[[0.50, 0.22], [0.50, -0.22], [-0.05, -0.22], [-0.05, 0.22]]"
+        points: "[[0.38, 0.16], [0.38, -0.16], [-0.03, -0.16], [-0.03, 0.16]]"
         linear_min: 0.01
-        linear_max: 0.60
-        theta_min: -1.0
-        theta_max: 1.0
+        linear_max: 0.70
+        theta_min: -1.2
+        theta_max: 1.2
       backward:
-        points: "[[0.05, 0.22], [0.05, -0.22], [-0.45, -0.22], [-0.45, 0.22]]"
-        linear_min: -0.30
+        points: "[[0.03, 0.16], [0.03, -0.16], [-0.34, -0.16], [-0.34, 0.16]]"
+        linear_min: -0.35
         linear_max: -0.01
-        theta_min: -1.0
-        theta_max: 1.0
+        theta_min: -1.2
+        theta_max: 1.2
       rotation:
-        points: "[[0.25, 0.20], [0.25, -0.20], [-0.25, -0.20], [-0.25, 0.20]]"
-        linear_min: -0.01
-        linear_max: 0.01
-        theta_min: -1.0
-        theta_max: 1.0
+        points: "[[0.18, 0.15], [0.18, -0.15], [-0.18, -0.15], [-0.18, 0.15]]"
+        linear_min: -0.02
+        linear_max: 0.02
+        theta_min: -1.2
+        theta_max: 1.2
       visualize: true
       polygon_pub_topic: "collision_monitor/stop_polygon"
       enabled: true
@@ -74,8 +74,8 @@ nav2_collision_monitor:
       type: "polygon"
       action_type: "slowdown"
       min_points: 3
-      slowdown_ratio: 0.85
-      points: "[[0.90, 0.30], [0.90, -0.30], [-0.10, -0.30], [-0.10, 0.30]]"
+      slowdown_ratio: 0.95
+      points: "[[0.68, 0.23], [0.68, -0.23], [-0.06, -0.23], [-0.06, 0.23]]"
       visualize: true
       polygon_pub_topic: "collision_monitor/approach_polygon"
       enabled: true
@@ -85,9 +85,9 @@ nav2_collision_monitor:
       type: "polygon"
       action_type: "limit"
       min_points: 3
-      linear_limit: 0.50
-      angular_limit: 1.0
-      points: "[[1.50, 0.38], [1.50, -0.38], [-0.15, -0.38], [-0.15, 0.38]]"
+      linear_limit: 0.64
+      angular_limit: 1.2
+      points: "[[1.05, 0.28], [1.05, -0.28], [-0.10, -0.28], [-0.10, 0.28]]"
       visualize: true
       polygon_pub_topic: "collision_monitor/slow_polygon"
       enabled: true
