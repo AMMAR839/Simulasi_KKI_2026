@@ -1,54 +1,49 @@
-origin:
-  latitude: 1.470000
-  longitude: 102.110000
-  elevation: 0.0
-
+origin: {latitude: 1.47, longitude: 102.11, elevation: 0.0}
 default_speed_mps: 0.75
-
 waypoints:
-  - {name: start_b, x: -10.80, y: -8.70, speed: 0.28}
-  - {name: pre_gate1, x: -12.00, y: -4.00, speed: 0.42}
-  - {name: gate1_approach, x: -12.00, y: -1.00, speed: 0.34}
-  - {name: gate1_center, x: -12.00, y: 0.00, speed: 0.30}
-  - {name: gate1_exit, x: -12.00, y: 1.00, speed: 0.34}
-  - {name: gate2_approach, x: -12.00, y: 3.80, speed: 0.34}
-  - {name: gate2_center, x: -12.00, y: 4.80, speed: 0.30}
-  - {name: gate2_exit, x: -12.00, y: 5.80, speed: 0.34}
-  - {name: gate3_approach, x: -12.00, y: 7.80, speed: 0.32}
-  - {name: gate3_center, x: -12.00, y: 8.80, speed: 0.28}
-  - {name: gate3_exit, x: -12.00, y: 9.80, speed: 0.24}
-  - {name: top_left_entry, x: -12.00, y: 10.80, speed: 0.22}
-  - {name: top_left_turn, x: -11.20, y: 11.60, speed: 0.18}
-  - {name: corner_top_left, x: -8.20, y: 12.00, speed: 0.20}
-  - {name: gate4_approach, x: -6.20, y: 12.00, speed: 0.26}
-  - {name: gate4_center, x: -5.20, y: 12.00, speed: 0.24}
-  - {name: gate4_exit, x: -4.20, y: 12.00, speed: 0.26}
-  - {name: gate5_approach, x: -2.40, y: 12.00, speed: 0.26}
-  - {name: gate5_center, x: -1.40, y: 12.00, speed: 0.24}
-  - {name: gate5_exit, x: -0.40, y: 12.00, speed: 0.26}
-  - {name: gate6_approach, x: 1.40, y: 12.00, speed: 0.26}
-  - {name: gate6_center, x: 2.40, y: 12.00, speed: 0.24}
-  - {name: gate6_exit, x: 3.40, y: 12.00, speed: 0.26}
-  - {name: gate7_approach, x: 5.20, y: 12.00, speed: 0.26}
-  - {name: gate7_center, x: 6.20, y: 12.00, speed: 0.24}
-  - {name: gate7_exit, x: 7.20, y: 12.00, speed: 0.26}
-  - {name: corner_top_right, x: 9.20, y: 12.00, speed: 0.22}
-  - {name: top_right_turn, x: 11.20, y: 11.60, speed: 0.18}
-  - {name: gate10_approach, x: 12.00, y: 9.80, speed: 0.24}
-  - {name: gate10_center, x: 12.00, y: 8.80, speed: 0.28}
-  - {name: gate10_exit, x: 12.00, y: 7.80, speed: 0.32}
-  - {name: gate9_approach, x: 12.00, y: 5.80, speed: 0.34}
-  - {name: gate9_center, x: 12.00, y: 4.80, speed: 0.30}
-  - {name: gate9_exit, x: 12.00, y: 3.80, speed: 0.34}
-  - {name: gate8_approach, x: 12.00, y: 1.00, speed: 0.34}
-  - {name: gate8_center, x: 12.00, y: 0.00, speed: 0.30}
-  - {name: gate8_exit, x: 12.00, y: -1.00, speed: 0.34}
-  - {name: path_12, x: 11.20, y: -4.80, speed: 0.35}
-  - {name: surface_photo_green_box, x: 11.20, y: -5.40, speed: 0.32}
-  - {name: underwater_photo_blue_box, x: 11.65, y: -7.70, speed: 0.32}
-  - {name: path_13, x: 12.40, y: -9.00, speed: 0.62}
-  - {name: path_14, x: 2.00, y: -11.20, speed: 0.75}
-  - {name: path_15, x: -4.00, y: -11.20, speed: 0.75}
-  - {name: return_to_start_finish, x: -10.80, y: -12.00, speed: 0.45}
-  - {name: dock_align, x: -12.15, y: -12.00, speed: 0.35}
-  - {name: dock_contact_blue_buoys, x: -12.15, y: -9.70, speed: 0.22, docking: true}
+- {name: start_b, x: -10.8, y: -8.7, speed: 0.38}
+- {name: pre_gate1, x: -12.0, y: -4.0, speed: 0.57}
+- {name: gate1_approach, x: -12.0, y: -1.0, speed: 0.46}
+- {name: gate1_center, x: -12.0, y: 0.0, speed: 0.41}
+- {name: gate1_exit, x: -12.0, y: 1.0, speed: 0.46}
+- {name: gate2_approach, x: -12.0, y: 3.8, speed: 0.46}
+- {name: gate2_center, x: -12.0, y: 4.8, speed: 0.41}
+- {name: gate2_exit, x: -12.0, y: 5.8, speed: 0.46}
+- {name: gate3_approach, x: -12.0, y: 7.8, speed: 0.43}
+- {name: gate3_center, x: -12.0, y: 8.8, speed: 0.38}
+- {name: gate3_exit, x: -12.0, y: 9.8, speed: 0.32}
+- {name: top_left_entry, x: -12.0, y: 10.8, speed: 0.32}
+- {name: top_left_turn, x: -11.2, y: 11.6, speed: 0.32}
+- {name: corner_top_left, x: -8.2, y: 12.0, speed: 0.32}
+- {name: gate4_approach, x: -6.2, y: 12.0, speed: 0.35}
+- {name: gate4_center, x: -5.2, y: 12.0, speed: 0.32}
+- {name: gate4_exit, x: -4.2, y: 12.0, speed: 0.35}
+- {name: gate5_approach, x: -2.4, y: 12.0, speed: 0.35}
+- {name: gate5_center, x: -1.4, y: 12.0, speed: 0.32}
+- {name: gate5_exit, x: -0.4, y: 12.0, speed: 0.35}
+- {name: gate6_approach, x: 1.4, y: 12.0, speed: 0.35}
+- {name: gate6_center, x: 2.4, y: 12.0, speed: 0.32}
+- {name: gate6_exit, x: 3.4, y: 12.0, speed: 0.35}
+- {name: gate7_approach, x: 5.2, y: 12.0, speed: 0.35}
+- {name: gate7_center, x: 6.2, y: 12.0, speed: 0.32}
+- {name: gate7_exit, x: 7.2, y: 12.0, speed: 0.35}
+- {name: corner_top_right, x: 9.2, y: 12.0, speed: 0.32}
+- {name: top_right_turn, x: 11.2, y: 11.6, speed: 0.32}
+- {name: gate10_approach, x: 12.0, y: 9.8, speed: 0.32}
+- {name: gate10_center, x: 12.0, y: 8.8, speed: 0.38}
+- {name: gate10_exit, x: 12.0, y: 7.8, speed: 0.43}
+- {name: gate9_approach, x: 12.0, y: 5.8, speed: 0.46}
+- {name: gate9_center, x: 12.0, y: 4.8, speed: 0.41}
+- {name: gate9_exit, x: 12.0, y: 3.8, speed: 0.46}
+- {name: gate8_approach, x: 12.0, y: 1.0, speed: 0.46}
+- {name: gate8_center, x: 12.0, y: 0.0, speed: 0.41}
+- {name: gate8_exit, x: 12.0, y: -1.0, speed: 0.46}
+- {name: path_12, x: 11.2, y: -4.8, speed: 0.47}
+- {name: surface_photo_green_box, x: 11.2, y: -5.4, speed: 0.32}
+- {name: underwater_photo_blue_box, x: 11.65, y: -7.7, speed: 0.32}
+- {name: path_13, x: 12.4, y: -9.0, speed: 0.75}
+- {name: path_14, x: 2.0, y: -11.2, speed: 0.75}
+- {name: path_15, x: -4.0, y: -11.2, speed: 0.75}
+- {name: return_to_start_finish, x: -10.8, y: -12.0, speed: 0.61}
+- {name: dock_align, x: -12.15, y: -12.0, speed: 0.35}
+- {name: dock_contact_blue_buoys, x: -12.15, y: -9.7, speed: 0.22, docking: true}

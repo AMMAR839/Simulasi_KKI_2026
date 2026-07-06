@@ -38,6 +38,7 @@ bt_navigator:
 controller_server:
   ros__parameters:
     use_sim_time: true
+    speed_limit_topic: "/asv/speed_limit"
     controller_frequency: 10.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.001
@@ -108,7 +109,7 @@ planner_server:
       change_penalty: 0.2
       non_straight_penalty: 1.15
       cost_penalty: 2.5
-      max_iterations: 250000
+      max_iterations: 500000
       max_on_approach_iterations: 1000
       max_planning_time: 3.0
       analytic_expansion_ratio: 3.5
@@ -149,7 +150,7 @@ behavior_server:
     local_frame: odom
     global_frame: map
     robot_base_frame: base_link
-    transform_tolerance: 0.5
+    transform_tolerance: 1.5
     simulate_ahead_time: 2.0
     max_rotational_vel: 0.8
     min_rotational_vel: 0.1
@@ -266,7 +267,7 @@ global_costmap:
       footprint: "[[0.50, 0.28], [0.50, -0.28], [-0.50, -0.28], [-0.50, 0.28]]"
       footprint_padding: 0.05
       plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
-      filters: ["preferred_lane_filter"]
+      filters: ["preferred_lane_filter", "speed_filter"]
 
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
@@ -280,7 +281,14 @@ global_costmap:
         plugin: "nav2_costmap_2d::KeepoutFilter"
         enabled: true
         filter_info_topic: /asv/navigation/keepout_info
-        transform_tolerance: 0.5
+        transform_tolerance: 1.5
+
+      # ── Speed Filter — zone-based speed limits from speed_mask.pgm ──
+      speed_filter:
+        plugin: "nav2_costmap_2d::SpeedFilter"
+        enabled: true
+        filter_info_topic: /asv/speed_filter_info
+        speed_limit_topic: /asv/speed_limit
 
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -332,6 +340,30 @@ map_server:
     yaml_filename: ""
     topic_name: "map"
     frame_id: "map"
+
+# ── SPEED FILTER MAP SERVER ───────────────────────────────────
+# Publishes the speed mask PGM as an OccupancyGrid for the SpeedFilter plugin.
+# The actual yaml path is set dynamically in nav2_stack.launch.py.
+speed_mask_server:
+  ros__parameters:
+    use_sim_time: true
+    yaml_filename: ""      # overridden by launch
+    topic_name: /asv/speed_mask
+    frame_id: map
+
+# ── COSTMAP FILTER INFO SERVER (Speed) ───────────────────────
+# Publishes the filter type + coefficients so SpeedFilter knows how to decode
+# pixel values from the speed_mask. Formula: speed_limit% = base + mask*multiplier
+#   mask=0   → 100% (no limit)    mask=55 → 45% (~0.28 m/s)
+#   mask=30  → 70% (~0.43 m/s)   mask=60 → 40% (~0.25 m/s)
+speed_filter_info_server:
+  ros__parameters:
+    use_sim_time: true
+    type: 1              # 1 = percentage of max speed
+    base: 100.0          # offset
+    multiplier: -1.0     # sign: higher pixel = lower speed
+    filter_info_topic: /asv/speed_filter_info
+    mask_topic: /asv/speed_mask
 
 # ── LIFECYCLE MANAGER ────────────────────────────────────────
 lifecycle_manager:

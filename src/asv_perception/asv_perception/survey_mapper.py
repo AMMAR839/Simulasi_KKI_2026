@@ -44,6 +44,11 @@ class SurveyMapper(Node):
             "/home/ammar/Documents/asv_simulation/asv_kki_2026_ws/mission_maps",
         )
         self.declare_parameter("course", "a")
+        self.declare_parameter(
+            "preload_map_yaml",
+            "",
+        )
+        self.declare_parameter("start_delay_s", 35.0)
 
         self.max_range = float(self.get_parameter("max_range_m").value)
         self.min_range = float(self.get_parameter("min_range_m").value)
@@ -56,6 +61,8 @@ class SurveyMapper(Node):
             origin_x=float(self.get_parameter("origin_x").value),
             origin_y=float(self.get_parameter("origin_y").value),
         )
+        self.start_delay = float(self.get_parameter("start_delay_s").value)
+        self._preload_map()
         self.pose = None
         self.scan_count = 0
         self.tf_buffer = Buffer()
@@ -76,6 +83,51 @@ class SurveyMapper(Node):
         self.create_service(Trigger, "/asv/mapping/save", self._save_map)
         self.create_timer(1.0, self._publish)
 
+    # ------------------------------------------------------------------
+    def _preload_map(self) -> None:
+        """Load a previously saved PGM map to pre-seed the mapper.
+
+        Reads the ``preload_map_yaml`` parameter.  If the YAML file exists,
+        it resolves the PGM path relative to the YAML file and delegates
+        to :meth:`OccupancyGridMapper.load_pgm`.
+        """
+        yaml_path_str = str(self.get_parameter("preload_map_yaml").value).strip()
+        if not yaml_path_str:
+            self.get_logger().info(
+                "survey_mapper: no preload_map_yaml set — starting with blank map."
+            )
+            return
+        yaml_path = Path(yaml_path_str)
+        if not yaml_path.exists():
+            self.get_logger().warn(
+                f"survey_mapper: preload_map_yaml '{yaml_path}' not found — "
+                "starting with blank map."
+            )
+            return
+        try:
+            with yaml_path.open("r") as f:
+                meta = yaml.safe_load(f)
+            image_entry = meta.get("image", "")
+            # Path may be absolute or relative to the YAML file's directory
+            pgm_path = Path(image_entry)
+            if not pgm_path.is_absolute():
+                pgm_path = yaml_path.parent / pgm_path
+            loaded = self.mapper.load_pgm(str(pgm_path))
+            if loaded > 0:
+                self.get_logger().info(
+                    f"survey_mapper: preloaded map from '{pgm_path.name}' — "
+                    f"{self.mapper.coverage_percent:.1f}% coverage ({loaded} cells)."
+                )
+            else:
+                self.get_logger().warn(
+                    f"survey_mapper: load_pgm('{pgm_path}') returned 0 cells — "
+                    "dimension/format mismatch? Starting with blank map."
+                )
+        except Exception as exc:  # pragma: no cover
+            self.get_logger().error(
+                f"survey_mapper: failed to preload map from '{yaml_path}': {exc}"
+            )
+
     def _on_odom(self, msg):
         position = msg.pose.pose.position
         self.pose = (
@@ -85,6 +137,9 @@ class SurveyMapper(Node):
         )
 
     def _on_scan(self, msg):
+        now_sec = self.get_clock().now().nanoseconds / 1e9
+        if now_sec < self.start_delay:
+            return
         self.scan_count += 1
         if self.scan_count % self.scan_stride:
             return
@@ -117,14 +172,23 @@ class SurveyMapper(Node):
                 Time.from_msg(msg.header.stamp),
                 timeout=Duration(seconds=0.03),
             )
-            translation = transform.transform.translation
-            return (
-                float(translation.x),
-                float(translation.y),
-                quaternion_to_yaw(transform.transform.rotation),
-            )
         except TransformException:
-            return self.pose
+            try:
+                transform = self.tf_buffer.lookup_transform(
+                    "map",
+                    msg.header.frame_id,
+                    Time(),
+                )
+            except TransformException as exc:
+                self.get_logger().warn(f"TF lookup failed: {exc}")
+                return None
+
+        translation = transform.transform.translation
+        return (
+            float(translation.x),
+            float(translation.y),
+            quaternion_to_yaw(transform.transform.rotation),
+        )
 
     def _make_message(self):
         msg = OccupancyGrid()

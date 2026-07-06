@@ -1,1 +1,1 @@
-pkill -9 -f "gz|ruby|gazebo|rviz|ros2|nav2|planner_server|controller_server|behavior_server|waypoint_follower|lifecycle_manager|opennav_docking|planar_pose|cmd_vel_to|collision_monitor|mission_supervisor|sensor_status" ; rm -f /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* ; true
+pkill -9 -f "asv|ros2|nav2|gazebo|gz sim|rviz2|ruby|planar_pose|cmd_vel_to|hsv_target|survey_mapper|landmark_mapper|mission_supervisor" ; rm -rf /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* /tmp/launch_params_*

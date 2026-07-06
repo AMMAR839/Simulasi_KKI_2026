@@ -29,6 +29,7 @@ def generate_launch_description():
     docking_params_file = LaunchConfiguration("docking_params_file")
     nav2_start_delay = LaunchConfiguration("nav2_start_delay_s")
     use_navsat = LaunchConfiguration("use_navsat")
+    speed_mask_yaml = LaunchConfiguration("speed_mask_yaml")
 
     nav2_share = FindPackageShare("asv_nav2")
     nav2_bt_share = FindPackageShare("nav2_bt_navigator")
@@ -75,6 +76,14 @@ def generate_launch_description():
                 description=(
                     "Enable GPS/NavSat global EKF. Sim courses use local Gazebo "
                     "coordinates by default for deterministic map/odom TF."
+                ),
+            ),
+            DeclareLaunchArgument(
+                "speed_mask_yaml",
+                default_value="",
+                description=(
+                    "Path to speed_mask.yaml for the Nav2 SpeedFilter. "
+                    "Set by the top-level launch file based on course selection."
                 ),
             ),
 
@@ -302,7 +311,39 @@ def generate_launch_description():
                         ],
                     ),
 
+                    # ── Speed Mask Server (for SpeedFilter) ──────
+                    # Publishes speed_mask.pgm as /asv/speed_mask OccupancyGrid
+                    Node(
+                        package="nav2_map_server",
+                        executable="map_server",
+                        name="speed_mask_server",
+                        output="screen",
+                        parameters=[
+                            nav2_params_file,
+                            {
+                                "use_sim_time": use_sim_time,
+                                "yaml_filename": speed_mask_yaml,
+                                "topic_name": "/asv/speed_mask",
+                                "frame_id": "map",
+                            },
+                        ],
+                    ),
+
+                    # ── CostmapFilterInfo Server (Speed) ──────────
+                    # Publishes encoding metadata for SpeedFilter plugin
+                    Node(
+                        package="nav2_map_server",
+                        executable="costmap_filter_info_server",
+                        name="speed_filter_info_server",
+                        output="screen",
+                        parameters=[
+                            nav2_params_file,
+                            {"use_sim_time": use_sim_time},
+                        ],
+                    ),
+
                     # ── Lifecycle Manager ─────────────────────
+
                     Node(
                         package="nav2_lifecycle_manager",
                         executable="lifecycle_manager",
@@ -322,6 +363,8 @@ def generate_launch_description():
                                     "waypoint_follower",
                                     "velocity_smoother",
                                     "nav2_collision_monitor",
+                                    "speed_mask_server",
+                                    "speed_filter_info_server",
                                 ],
                             }
                         ],

@@ -285,7 +285,7 @@ class MissionSupervisorNav2V2(Node):
         )
         self.task_cmd_pub = self.create_publisher(Twist, "/cmd_vel_task", 10)
         self.speed_limit_pub = self.create_publisher(
-            SpeedLimit, "/speed_limit", 10
+            SpeedLimit, "/asv/speed_limit", 10
         )
         self.trim_pub = self.create_publisher(
             Float64, "/asv/control/adaptive_trim", 10

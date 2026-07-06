@@ -3,7 +3,7 @@
   <name>asv_nav2</name>
   <version>0.1.0</version>
   <description>Nav2 full-stack configuration for ASV KKI 2026 — GPS navigation, collision monitor, docking, and behavior trees.</description>
-  <maintainer email="ammar@example.com">ammar</maintainer>
+  <maintainer email="ammaryasir839@gmail.com">ammar</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>

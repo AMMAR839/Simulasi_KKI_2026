@@ -1,4 +1,6 @@
 import math
+import re
+from pathlib import Path
 
 import numpy as np
 
@@ -78,6 +80,62 @@ class OccupancyGridMapper:
             np.rint(probability[self.observed] * 100.0), 0, 100
         ).astype(np.int8)
         return result
+
+    def load_pgm(self, pgm_path: str) -> int:
+        """Pre-seed the mapper from a saved PGM file.
+
+        The PGM must use the same resolution and origin as this mapper.
+        Pixel convention (ROS2 / nav2_map_server trinary mode):
+          254  → free     (log_odds = -2.0, observed = True)
+            0  → occupied (log_odds = +3.0, observed = True)
+          205  → unknown  (log_odds =  0.0, observed = False)
+
+        Returns the number of observed cells loaded (0 on failure).
+        """
+        path = Path(pgm_path)
+        if not path.exists():
+            return 0
+        try:
+            with path.open("rb") as f:
+                raw = f.read()
+            # Parse PGM header (P5 format, skip comment lines)
+            header_end = 0
+            tokens = []
+            i = 0
+            while len(tokens) < 4:
+                if raw[i:i+1] == b"#":
+                    while raw[i:i+1] not in (b"\n", b""):
+                        i += 1
+                    i += 1
+                    continue
+                match = re.match(rb"[^\S\n]*(\S+)", raw[i:])
+                if match:
+                    tokens.append(match.group(1).decode("ascii"))
+                    i += match.end()
+                else:
+                    i += 1
+            magic, width_s, height_s, maxval_s = tokens
+            if magic != "P5":
+                return 0
+            pgm_w, pgm_h = int(width_s), int(height_s)
+            # Pixel data starts after the header whitespace byte
+            pixel_data = raw[i:]
+            if i < len(raw) and raw[i:i+1] in (b" ", b"\t", b"\n", b"\r"):
+                pixel_data = raw[i + 1:]
+            img = np.frombuffer(pixel_data, dtype=np.uint8).reshape(pgm_h, pgm_w)
+            if pgm_w != self.width or pgm_h != self.height:
+                return 0
+            # PGM was saved with np.flipud — restore to internal row-order
+            img = np.flipud(img)
+            free_mask = img == 254
+            occ_mask  = img == 0
+            self.log_odds[free_mask] = -2.0
+            self.observed[free_mask] = True
+            self.log_odds[occ_mask]  =  3.0
+            self.observed[occ_mask]  = True
+            return int(np.count_nonzero(self.observed))
+        except Exception:
+            return 0
 
     @property
     def coverage_percent(self):

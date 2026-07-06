@@ -34,6 +34,8 @@ def is_gate_waypoint(name):
 
 
 def segment_lane_half_width(first_name, second_name, half_width, turn_half_width):
+    if any(token in first_name or token in second_name for token in ("photo", "box")):
+        return 4.0
     if is_gate_waypoint(first_name) or is_gate_waypoint(second_name):
         return half_width
     if is_turn_waypoint(first_name) or is_turn_waypoint(second_name):
@@ -42,6 +44,8 @@ def segment_lane_half_width(first_name, second_name, half_width, turn_half_width
 
 
 def waypoint_lane_half_width(name, half_width, turn_half_width):
+    if any(token in name for token in ("photo", "box")):
+        return 4.0
     if is_gate_waypoint(name):
         return half_width
     if is_turn_waypoint(name):

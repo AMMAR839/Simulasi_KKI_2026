@@ -40,6 +40,7 @@ def generate_launch_description():
     nav2_start_delay = LaunchConfiguration("nav2_start_delay_s")
     mission_start_delay = LaunchConfiguration("mission_start_delay_s")
     use_navsat = LaunchConfiguration("use_navsat")
+    speed_mask_yaml = LaunchConfiguration("speed_mask_yaml")
 
     nav_share = FindPackageShare("asv_navigation")
     nav2_share = FindPackageShare("asv_nav2")
@@ -70,6 +71,11 @@ def generate_launch_description():
                 default_value="false",
                 description="Use GPS/NavSat global EKF instead of local simulator map frame.",
             ),
+            DeclareLaunchArgument(
+                "speed_mask_yaml",
+                default_value="",
+                description="Path to speed_mask.yaml for Nav2 SpeedFilter (empty = disabled).",
+            ),
 
             # ── Nav2 Full Stack ───────────────────────────────
             # Includes: EKF odom, optional EKF map/NavSat, BT navigator,
@@ -84,6 +90,7 @@ def generate_launch_description():
                     "use_sim_time": use_sim_time,
                     "nav2_start_delay_s": nav2_start_delay,
                     "use_navsat": use_navsat,
+                    "speed_mask_yaml": speed_mask_yaml,
                 }.items(),
             ),
 
@@ -139,7 +146,10 @@ def generate_launch_description():
                             "-p", "use_docking_server:=true",
                             "-p", "surface_capture_radius_m:=4.0",
                             "-p", "underwater_capture_radius_m:=3.0",
+                            "-p", "gate_nudge_speed_mps:=0.38",
+                            "-p", "lap2_gate_nudge_speed_mps:=0.48",
                         ],
+
                         name="mission_supervisor_nav2",
                         output="screen",
                         additional_env={

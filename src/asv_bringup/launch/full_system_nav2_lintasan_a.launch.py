@@ -136,6 +136,7 @@ def generate_launch_description():
                     "nav2_start_delay_s": nav2_start_delay,
                     "mission_start_delay_s": mission_start_delay,
                     "use_navsat": use_navsat,
+                    "speed_mask_yaml": "/home/ammar/Documents/asv_simulation/asv_kki_2026_ws/mission_maps/a/speed_mask.yaml",
                 }.items(),
             ),
         ]
