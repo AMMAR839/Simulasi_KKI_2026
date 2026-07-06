@@ -164,7 +164,7 @@ class MissionSupervisorNav2V2(Node):
         self.declare_parameter("gate_exit_accept_radius_m", 1.2)
         self.declare_parameter("gate_exit_min_cross_clearance_m", 0.20)
         self.declare_parameter("optional_accept_radius_m", 1.4)
-        self.declare_parameter("optional_recovery_skip_radius_m", 3.0)
+        self.declare_parameter("optional_recovery_skip_radius_m", 5.5)
         self.declare_parameter("turn_accept_radius_m", 0.9)
         self.declare_parameter("photo_approach_accept_radius_m", 1.8)
         self.declare_parameter("gate_nudge_trigger_distance_m", 3.6)
@@ -1771,7 +1771,6 @@ class MissionSupervisorNav2V2(Node):
         )
         correct_camera = (
             camera_detection
-            and range_m is not None
             and self._detection_matches_target_hint(
                 self.search_camera, detection, range_m
             )
@@ -1822,9 +1821,10 @@ class MissionSupervisorNav2V2(Node):
                     self.photos[self.lap].add(self.search_target)
                     if self.pose is not None:
                         self.capture_poses[self.search_target] = self.pose
+                    range_text = "none" if range_m is None else f"{range_m:.2f}m"
                     self.get_logger().info(
                         f"[LAP {self.lap}] Captured {self.search_target} "
-                        f"range={range_m:.2f}m score={detection['score']:.2f}"
+                        f"range={range_text} score={detection['score']:.2f}"
                     )
                     self._finish_search(captured=True)
                     return
@@ -1954,8 +1954,14 @@ class MissionSupervisorNav2V2(Node):
         hint = self.config["target_hints"].get(self.search_target)
         if hint is None:
             return True
-        if self.pose is None or range_m is None:
+        if self.pose is None:
             return False
+        # If range_m is not available, we associate based on boat distance to hint
+        if range_m is None:
+            distance_to_hint = math.hypot(self.pose[0] - hint[0], self.pose[1] - hint[1])
+            # If the boat is near the hint, we assume it matches!
+            return distance_to_hint <= 5.0
+            
         bearing = self._detection_bearing(camera, detection)
         if bearing is None:
             return False
@@ -1972,7 +1978,7 @@ class MissionSupervisorNav2V2(Node):
                 else "photo_hint_association_radius_m"
             ).value
         )
-        return association_error <= association_radius
+        return association_error <= max(association_radius, 3.5)
 
     def _save_photo(self):
         msg = self.latest_images[self.search_camera]

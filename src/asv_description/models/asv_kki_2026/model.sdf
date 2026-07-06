@@ -818,7 +818,7 @@
     <link name="down_camera_link">
       <gravity>false</gravity>
       <kinematic>false</kinematic>
-      <pose relative_to="base_link">0.350 -0.380 -0.050 0 0 1.570796</pose>
+      <pose relative_to="base_link">0.350 -0.380 -0.050 0 1.570796 0</pose>
       <inertial>
         <mass>0.05</mass>
         <inertia>
@@ -843,7 +843,7 @@
         </material>
       </visual>
       <visual name="down_camera_lens_visual">
-        <pose>0.030 0 0 0 1.570796 0</pose>
+        <pose>0.020 0 0 0 0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.016</radius>

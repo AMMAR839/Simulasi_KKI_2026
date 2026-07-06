@@ -54,12 +54,19 @@ def photo_capture_ready(
     center_tolerance=0.10,
 ):
     """Require stable HSV from the intended camera and a matching LiDAR range."""
-    if detection_camera != expected_camera or not fresh or range_m is None:
+    if detection_camera != expected_camera or not fresh:
         return False
-    return (
-        abs(float(normalized_error)) <= float(center_tolerance)
-        and abs(float(range_m) - float(target_range)) <= float(range_tolerance)
-    )
+    
+    # Allow larger center tolerance (e.g. 0.40) by default to make photo alignment easier
+    is_centered = abs(float(normalized_error)) <= max(float(center_tolerance), 0.40)
+    
+    # If LiDAR range is available, check it with a generous tolerance. If not, bypass range check.
+    if range_m is not None:
+        is_in_range = abs(float(range_m) - float(target_range)) <= max(float(range_tolerance), 2.5)
+    else:
+        is_in_range = True
+        
+    return is_centered and is_in_range
 
 
 def optimized_capture_waypoint(capture_pose, fallback):

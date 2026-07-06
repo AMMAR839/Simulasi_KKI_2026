@@ -45,10 +45,7 @@ waypoints:
 - {name: underwater_photo_approach, x: -8.5, y: -7.5, speed: 0.47}
 - {name: underwater_photo_blue_box, x: -9.0, y: -7.7, speed: 0.22}
 - {name: photo_exit_south, x: -8.0, y: -9.8, speed: 0.54}
-- {name: path_13, x: -12.4, y: -9.8, speed: 0.75}
-- {name: path_14, x: -2.0, y: -11.2, speed: 0.75}
-- {name: path_15, x: 4.0, y: -11.2, speed: 0.75}
-- {name: return_south, x: 9.0, y: -12.0, speed: 0.75}
+- {name: return_south, x: 6.0, y: -11.5, speed: 0.75}
 - {name: dock_align_south, x: 11.5, y: -12.0, speed: 0.4}
 - {name: dock_entry, x: 11.5, y: -11.0, speed: 0.3}
 - {name: dock_side_align, x: 11.5, y: -9.7, speed: 0.22}

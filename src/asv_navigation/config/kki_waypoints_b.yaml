@@ -41,9 +41,6 @@ waypoints:
 - {name: path_12, x: 11.2, y: -4.8, speed: 0.47}
 - {name: surface_photo_green_box, x: 11.2, y: -5.4, speed: 0.32}
 - {name: underwater_photo_blue_box, x: 11.65, y: -7.7, speed: 0.32}
-- {name: path_13, x: 12.4, y: -9.0, speed: 0.75}
-- {name: path_14, x: 2.0, y: -11.2, speed: 0.75}
-- {name: path_15, x: -4.0, y: -11.2, speed: 0.75}
-- {name: return_to_start_finish, x: -10.8, y: -12.0, speed: 0.61}
+- {name: return_to_start_finish, x: -6.0, y: -11.5, speed: 0.75}
 - {name: dock_align, x: -12.15, y: -12.0, speed: 0.35}
 - {name: dock_contact_blue_buoys, x: -12.15, y: -9.7, speed: 0.22, docking: true}

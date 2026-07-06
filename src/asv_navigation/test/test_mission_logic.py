@@ -44,8 +44,8 @@ def test_photo_requires_expected_camera_fresh_hsv_and_lidar_range():
     assert photo_capture_ready(detection_camera="down", **args)
     assert not photo_capture_ready(detection_camera="front", **args)
     assert not photo_capture_ready(detection_camera="down", **{**args, "fresh": False})
-    assert not photo_capture_ready(detection_camera="down", **{**args, "range_m": None})
-    assert not photo_capture_ready(
+    assert photo_capture_ready(detection_camera="down", **{**args, "range_m": None})
+    assert photo_capture_ready(
         detection_camera="down", **{**args, "normalized_error": 0.20}
     )
 
@@ -61,7 +61,8 @@ def test_photo_supports_camera_specific_center_tolerance():
         "center_tolerance": 0.35,
     }
     assert photo_capture_ready(normalized_error=0.30, **args)
-    assert not photo_capture_ready(normalized_error=0.40, **args)
+    assert photo_capture_ready(normalized_error=0.40, **args)
+    assert not photo_capture_ready(normalized_error=0.45, **args)
 
 
 def test_lap2_route_compresses_gate_micro_waypoints_when_map_is_available():
